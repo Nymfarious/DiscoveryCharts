@@ -1,150 +1,156 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "@/hooks/use-toast";
-import JSZip from "jszip";
+import { 
+  ZoomIn, 
+  ZoomOut, 
+  Maximize, 
+  Pin, 
+  Layers, 
+  Clock,
+  HelpCircle,
+  Eye,
+  MapPin
+} from "lucide-react";
+import OpenSeadragon from "openseadragon";
 
-interface HistoryEntry {
-  text: string;
-  filetype?: string;
-  mins?: number;
-  size?: number;
-  date?: string;
-  summary?: string;
-  archived?: boolean;
+interface MapPin {
+  id: string;
+  title: string;
+  x: number; // normalized 0-1
+  y: number; // normalized 0-1
+  blurb: string;
+  sources: string[];
+  year?: number;
+  layer?: string;
 }
 
 const History = () => {
   const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [showArchived, setShowArchived] = useState<boolean>(false);
-  const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set());
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const osdViewerRef = useRef<OpenSeadragon.Viewer | null>(null);
+  const [selectedPin, setSelectedPin] = useState<MapPin | null>(null);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [showLayers, setShowLayers] = useState(true);
+  const [timelineValue, setTimelineValue] = useState([0]);
+  const [focusMode, setFocusMode] = useState(false);
+  
+  // Mock data - will be replaced with database
+  const [pins] = useState<MapPin[]>([
+    {
+      id: "1",
+      title: "Nineveh",
+      x: 0.45,
+      y: 0.35,
+      blurb: "Ancient Assyrian capital, located near modern Mosul, Iraq. Flourished 705-612 BCE as administrative center of the Neo-Assyrian Empire.",
+      sources: ["British Museum Archives", "Perseus Digital Library"],
+      year: -700,
+      layer: "Assyrian Empire"
+    },
+    {
+      id: "2", 
+      title: "Babylon",
+      x: 0.42,
+      y: 0.48,
+      blurb: "Major city in ancient Mesopotamia, capital of Babylonian Empire. Peak influence under Nebuchadnezzar II (605-562 BCE).",
+      sources: ["British Museum", "World History Encyclopedia"],
+      year: -600,
+      layer: "Babylonian Empire"
+    }
+  ]);
+
+  const [activeLayers, setActiveLayers] = useState<Set<string>>(
+    new Set(["Assyrian Empire", "Babylonian Empire", "Trade Routes"])
+  );
 
   useEffect(() => {
     const color = localStorage.getItem("favcolor") || "#d4eaf7";
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
 
-    // Load history from localStorage
-    const savedHistory = JSON.parse(localStorage.getItem("promptHistory") || "[]");
-    setHistory(savedHistory);
+    // Initialize OpenSeadragon
+    if (viewerRef.current && !osdViewerRef.current) {
+      osdViewerRef.current = OpenSeadragon({
+        element: viewerRef.current,
+        prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+        tileSources: {
+          type: "image",
+          // Placeholder image - will be replaced with actual tiled map
+          url: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=2400&h=3600&fit=crop"
+        },
+        showNavigationControl: false,
+        defaultZoomLevel: 1,
+        minZoomLevel: 0.5,
+        maxZoomLevel: 10,
+        visibilityRatio: 1,
+        constrainDuringPan: true,
+        animationTime: 0.5,
+      });
+
+      toast({
+        title: "Map Viewer Ready",
+        description: "Use mouse wheel to zoom, click and drag to pan",
+      });
+    }
+
+    return () => {
+      if (osdViewerRef.current) {
+        osdViewerRef.current.destroy();
+        osdViewerRef.current = null;
+      }
+    };
   }, []);
 
-  const formatSize = (bytes: number) => {
-    if (bytes > 1000000) return (bytes / 1000000).toFixed(2) + " MB";
-    if (bytes > 1000) return (bytes / 1000).toFixed(1) + " KB";
-    return bytes + " B";
+  const handleZoomIn = () => {
+    osdViewerRef.current?.viewport.zoomBy(1.5);
   };
 
-  const saveHistory = (newHistory: HistoryEntry[]) => {
-    setHistory(newHistory);
-    localStorage.setItem("promptHistory", JSON.stringify(newHistory));
+  const handleZoomOut = () => {
+    osdViewerRef.current?.viewport.zoomBy(0.67);
   };
 
-  const archiveEntry = (index: number) => {
-    const newHistory = [...history];
-    newHistory[index].archived = !newHistory[index].archived;
-    saveHistory(newHistory);
-  };
-
-  const purgeEntry = (index: number) => {
-    if (confirm("Permanently delete this entry? (Cannot be undone)")) {
-      const newHistory = history.filter((_, i) => i !== index);
-      saveHistory(newHistory);
-      setSelectedEntries(new Set());
-    }
-  };
-
-  const downloadEntry = (index: number) => {
-    const entry = history[index];
-    const blob = new Blob([entry.text], { 
-      type: entry.filetype === 'Audio' ? 'audio/wav' : 'text/plain' 
+  const handleReset = () => {
+    osdViewerRef.current?.viewport.goHome();
+    setFocusMode(false);
+    toast({
+      title: "View Reset",
+      description: "Returned to default view",
     });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Little_Sister_${entry.filetype || 'Text'}_${index}.${entry.filetype === 'Audio' ? 'wav' : 'txt'}`;
-    link.click();
   };
 
-  const emailEntry = (index: number) => {
-    const entry = history[index];
-    const email = localStorage.getItem("userEmail") || "";
-    const subject = "Little Sister Entry";
-    const body = encodeURIComponent(entry.text || '');
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  const handlePinClick = (pin: MapPin) => {
+    setSelectedPin(pin);
   };
 
-  const exportZip = async () => {
-    if (selectedEntries.size === 0) {
-      toast({
-        title: "No entries selected",
-        description: "Select at least one entry to export.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const zip = new JSZip();
-    Array.from(selectedEntries).forEach(index => {
-      const entry = history[index];
-      const ext = entry.filetype === 'Audio' ? 'wav' : 'txt';
-      zip.file(`Little_Sister_${entry.filetype || 'Text'}_${index}.${ext}`, entry.text);
-    });
-
-    try {
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(content);
-      link.download = "Little_Sister_History.zip";
-      link.click();
-      
-      toast({
-        title: "Export successful",
-        description: "Your history has been exported as a ZIP file.",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error creating the ZIP file.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const selectAll = () => {
-    const filteredHistory = history.filter(entry => showArchived ? entry.archived : !entry.archived);
-    const allIndices = new Set(filteredHistory.map((_, index) => index));
-    setSelectedEntries(allIndices);
-  };
-
-  const purgeSelected = () => {
-    if (confirm("Permanently purge all selected entries?")) {
-      const indicesToRemove = Array.from(selectedEntries).sort((a, b) => b - a);
-      let newHistory = [...history];
-      indicesToRemove.forEach(index => {
-        newHistory.splice(index, 1);
-      });
-      saveHistory(newHistory);
-      setSelectedEntries(new Set());
-    }
-  };
-
-  const toggleEntrySelection = (index: number) => {
-    const newSelected = new Set(selectedEntries);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
+  const toggleLayer = (layer: string) => {
+    const newLayers = new Set(activeLayers);
+    if (newLayers.has(layer)) {
+      newLayers.delete(layer);
     } else {
-      newSelected.add(index);
+      newLayers.add(layer);
     }
-    setSelectedEntries(newSelected);
+    setActiveLayers(newLayers);
   };
 
-  const filteredHistory = history.filter(entry => showArchived ? entry.archived : !entry.archived);
+  const saveToPinboard = () => {
+    if (selectedPin) {
+      toast({
+        title: "Saved to Pinboard",
+        description: `"${selectedPin.title}" added to your library`,
+      });
+      // TODO: Save to database
+    }
+  };
+
+  const filteredPins = pins.filter(pin => 
+    pin.layer ? activeLayers.has(pin.layer) : true
+  );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Sidebar */}
       <div 
         className="fixed left-0 top-0 bottom-0 w-4 opacity-90 z-10"
@@ -153,7 +159,7 @@ const History = () => {
       
       {/* Header */}
       <div 
-        className="w-full opacity-92 p-4 pl-12 text-foreground text-xl font-bold ml-4 flex items-center gap-3"
+        className="w-full opacity-92 p-4 pl-12 text-foreground text-xl font-bold ml-4 flex items-center gap-3 border-b border-border"
         style={{ backgroundColor: themeColor }}
       >
         <Button variant="ghost" asChild className="mr-4">
@@ -161,102 +167,169 @@ const History = () => {
             ← Dashboard
           </Link>
         </Button>
-        <span className="text-4xl">📜</span>
-        History
+        <MapPin className="w-6 h-6" />
+        Map Viewer
       </div>
       
-      {/* Main Content */}
-      <div className="ml-10 mt-9 p-8">
-        <div className="flex flex-wrap gap-4 items-center mb-6">
-          <Button onClick={selectAll} variant="outline">
-            Select All
-          </Button>
-          <Button onClick={exportZip} variant="outline">
-            Export as ZIP
-          </Button>
-          <Button onClick={purgeSelected} variant="destructive">
-            Purge Selected
-          </Button>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="showArchived"
-              checked={showArchived}
-              onCheckedChange={(checked) => setShowArchived(checked === true)}
-            />
-            <Label htmlFor="showArchived">Show Archived</Label>
+      {/* Main Layout */}
+      <div className="flex-1 flex ml-4">
+        {/* Left Panel - Layers & Timeline */}
+        <div className="w-64 border-r border-border bg-card/50 p-4 space-y-4 overflow-y-auto">
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-4 h-4" />
+              <h3 className="font-bold">Map Layers</h3>
+            </div>
+            <div className="space-y-2">
+              {["Assyrian Empire", "Babylonian Empire", "Trade Routes", "Geographic Features"].map(layer => (
+                <label key={layer} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 p-2 rounded">
+                  <input
+                    type="checkbox"
+                    checked={activeLayers.has(layer)}
+                    onChange={() => toggleLayer(layer)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{layer}</span>
+                </label>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4" />
+              <h3 className="font-bold">Timeline</h3>
+            </div>
+            <button
+              onClick={() => setShowTimeline(!showTimeline)}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {showTimeline ? "Hide" : "Show"} Timeline
+            </button>
+            {showTimeline && (
+              <div className="mt-4">
+                <Slider
+                  value={timelineValue}
+                  onValueChange={setTimelineValue}
+                  min={-3000}
+                  max={0}
+                  step={100}
+                  className="mb-2"
+                />
+                <div className="text-xs text-center text-muted-foreground">
+                  {Math.abs(timelineValue[0])} BCE
+                </div>
+              </div>
+            )}
+          </Card>
+
+          <div className="text-xs text-muted-foreground p-2">
+            <p className="font-semibold mb-1">Active Pins: {filteredPins.length}</p>
+            <p>Use layers to filter visible locations</p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {filteredHistory.map((entry, index) => {
-            const actualIndex = history.indexOf(entry);
-            const meta = `${entry.filetype || 'Text'} • ${entry.mins || ''}min • ${formatSize(entry.size || entry.text.length)} • ${entry.date ? new Date(entry.date).toLocaleDateString() : ''}`;
-            const summary = entry.summary || "(Short AI summary here)";
-            
-            return (
-              <div 
-                key={actualIndex}
-                className={`bg-card p-4 rounded-xl border border-border shadow-sm ${
-                  entry.archived ? 'opacity-50 bg-muted' : ''
-                }`}
+        {/* Center - Map Canvas */}
+        <div className="flex-1 flex flex-col">
+          <div 
+            ref={viewerRef} 
+            className={`flex-1 relative ${focusMode ? 'ring-4 ring-primary' : ''}`}
+            style={{ minHeight: '500px' }}
+          >
+            {/* Pin Overlays */}
+            {filteredPins.map(pin => (
+              <button
+                key={pin.id}
+                onClick={() => handlePinClick(pin)}
+                className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 bg-destructive hover:bg-destructive/80 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 z-50"
+                style={{
+                  left: `${pin.x * 100}%`,
+                  top: `${pin.y * 100}%`,
+                }}
+                title={pin.title}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={selectedEntries.has(actualIndex)}
-                      onCheckedChange={() => toggleEntrySelection(actualIndex)}
-                    />
-                    <div>
-                      <span className="font-bold mr-3">{entry.filetype || 'Text'}</span>
-                      <span className="text-sm text-muted-foreground">{meta}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button onClick={() => downloadEntry(actualIndex)} size="sm" variant="outline">
-                      ⬇️ Export
-                    </Button>
-                    <Button onClick={() => emailEntry(actualIndex)} size="sm" variant="outline">
-                      ✉️ Email
-                    </Button>
-                    <Button 
-                      onClick={() => archiveEntry(actualIndex)} 
-                      size="sm" 
-                      variant="outline"
-                      className="bg-yellow-50 dark:bg-yellow-950/20"
-                    >
-                      {entry.archived ? 'Restore' : 'Archive'}
-                    </Button>
-                    <Button 
-                      onClick={() => purgeEntry(actualIndex)} 
-                      size="sm" 
-                      variant="destructive"
-                    >
-                      Purge
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="text-sm italic text-green-600 dark:text-green-400">
-                  {summary}
-                </div>
+                <Pin className="w-4 h-4 text-destructive-foreground" />
+              </button>
+            ))}
+          </div>
+
+          {/* Bottom Controls */}
+          <div className="border-t border-border bg-card/50 p-3 flex items-center justify-between">
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={handleZoomIn} title="Zoom In">
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleZoomOut} title="Zoom Out">
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleReset} title="Reset View">
+                <Maximize className="w-4 h-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant={focusMode ? "default" : "outline"}
+                onClick={() => setFocusMode(!focusMode)}
+                title="Focus Mode"
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <Button size="sm" variant="ghost" title="Help">
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Panel - Context Bubble */}
+        {selectedPin && (
+          <div className="w-96 border-l border-border bg-card/50 p-4 overflow-y-auto">
+            <Card className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <h2 className="text-xl font-bold">{selectedPin.title}</h2>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedPin(null)}
+                >
+                  ✕
+                </Button>
               </div>
-            );
-          })}
-          
-          {filteredHistory.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">No {showArchived ? 'archived' : 'active'} entries found.</p>
-              <p className="text-sm mt-2">
-                {showArchived 
-                  ? "Archive some entries to see them here." 
-                  : "Start using Little Sister features to build your history."
-                }
+              
+              <p className="text-sm mb-4 leading-relaxed">{selectedPin.blurb}</p>
+              
+              {selectedPin.year && (
+                <p className="text-xs text-muted-foreground mb-3">
+                  Era: {Math.abs(selectedPin.year)} BCE
+                </p>
+              )}
+              
+              <div className="space-y-2 mb-4">
+                <p className="text-xs font-semibold">Sources:</p>
+                {selectedPin.sources.map((source, idx) => (
+                  <p key={idx} className="text-xs text-muted-foreground pl-2">
+                    • {source}
+                  </p>
+                ))}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveToPinboard} className="flex-1">
+                  Save to Pinboard
+                </Button>
+                <Button size="sm" variant="outline">
+                  More Info
+                </Button>
+              </div>
+            </Card>
+
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Click pins on the map to explore historical locations. Use the timeline and layers to filter content.
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
