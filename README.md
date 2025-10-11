@@ -1,3 +1,46 @@
+# History Discovery — Map Viewer
+
+Interactive deep-zoom viewer for historical maps with hotspots, search, and AI-powered discovery.
+
+## Phase 1 — MVP Features
+
+- **Deep Zoom Viewer** using OpenSeadragon with DZI tiles
+- **Hotspot/Annotations** layer with search and jump functionality  
+- **Tiler Script** to generate watermarked tiles from large images
+- **Clean UI** with responsive design
+
+## Tile Generation
+
+To generate DZI tiles from a large source image (e.g., 7200×10800px at 300dpi):
+
+```bash
+npm run tile -- ./path/to/your-image.jpg "© History Discovery — Demo"
+```
+
+This creates watermarked tiles at `public/tiles/sample.dzi`.
+
+## Project Structure
+
+```
+├── scripts/
+│   └── tile-image.mjs        # Tiler with watermark support
+├── src/
+│   ├── components/
+│   │   └── HistoryViewer.tsx # OpenSeadragon wrapper
+│   ├── data/
+│   │   └── hotspots.ts       # Pin locations and metadata
+│   └── pages/
+│       └── History.tsx       # Main viewer page
+└── public/
+    └── tiles/                # DZI tiles output
+```
+
+## Adjusting Hotspots
+
+Edit `src/data/hotspots.ts` to adjust pin coordinates (normalized 0-1) after viewing your map.
+
+---
+
 # Welcome to your Lovable project
 
 ## Project info
