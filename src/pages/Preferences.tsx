@@ -1,0 +1,473 @@
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
+
+// ElevenLabs voices with IDs (free tier: 10k chars/month)
+const ELEVENLABS_VOICES = [
+  { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', gender: 'female' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', gender: 'male' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'female' },
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', gender: 'female' },
+  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', gender: 'male' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', gender: 'male' },
+];
+
+// Theme presets with light, medium, and dark variants
+const THEME_PRESETS = [
+  {
+    name: "Blue",
+    colors: { light: "#e3f2fd", medium: "#2196f3", dark: "#1565c0" }
+  },
+  {
+    name: "Purple", 
+    colors: { light: "#f3e5f5", medium: "#9c27b0", dark: "#6a1b9a" }
+  },
+  {
+    name: "Gray",
+    colors: { light: "#f5f5f5", medium: "#757575", dark: "#424242" }
+  },
+  {
+    name: "Pink",
+    colors: { light: "#fce4ec", medium: "#e91e63", dark: "#ad1457" }
+  },
+  {
+    name: "Orange",
+    colors: { light: "#fff3e0", medium: "#ff9800", dark: "#e65100" }
+  },
+  {
+    name: "Green",
+    colors: { light: "#e8f5e8", medium: "#4caf50", dark: "#2e7d32" }
+  }
+];
+
+
+const Preferences = () => {
+  const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
+  const [emails, setEmails] = useState<string[]>([]);
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [elevenLabsApiKey, setElevenLabsApiKey] = useState<string>("");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("");
+  const [voiceProvider, setVoiceProvider] = useState<'browser' | 'elevenlabs'>('browser');
+  const [userName, setUserName] = useState<string>("");
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    // Load browser voices
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('en'));
+      setBrowserVoices(voices);
+    };
+    
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Load preferences data
+    const savedEmails = JSON.parse(localStorage.getItem("userEmails") || "[]");
+    setEmails(savedEmails);
+    setSelectedEmails(savedEmails.slice(0, 1)); // Default to first email selected
+    setElevenLabsApiKey(localStorage.getItem("elevenLabsApiKey") || "");
+    setSelectedVoiceId(localStorage.getItem("selectedVoiceId") || "");
+    setVoiceProvider(localStorage.getItem("voiceProvider") as 'browser' | 'elevenlabs' || 'browser');
+    setUserName(localStorage.getItem("username") || "");
+    
+    const color = localStorage.getItem("favcolor") || "#d4eaf7";
+    setThemeColor(color);
+    document.documentElement.style.setProperty('--theme-color', color);
+  }, []);
+
+  const handleThemeChange = (color: string) => {
+    setThemeColor(color);
+    document.documentElement.style.setProperty('--theme-color', color);
+  };
+
+  const savePreferences = () => {
+    localStorage.setItem("favcolor", themeColor);
+    localStorage.setItem("elevenLabsApiKey", elevenLabsApiKey);
+    localStorage.setItem("selectedVoiceId", selectedVoiceId);
+    localStorage.setItem("voiceProvider", voiceProvider);
+    localStorage.setItem("userEmails", JSON.stringify(emails));
+    localStorage.setItem("selectedEmails", JSON.stringify(selectedEmails));
+    
+    toast({
+      title: "Preferences saved!",
+      description: "Your preferences have been updated successfully.",
+    });
+  };
+
+  const resetPreferences = () => {
+    if (confirm("Reset ALL preferences?")) {
+      localStorage.removeItem("favcolor");
+      localStorage.removeItem("elevenLabsApiKey");
+      localStorage.removeItem("selectedVoiceId");
+      localStorage.removeItem("voiceProvider");
+      localStorage.removeItem("userEmails");
+      localStorage.removeItem("selectedEmails");
+      
+      setEmails([]);
+      setSelectedEmails([]);
+      setNewEmail("");
+      setElevenLabsApiKey("");
+      setSelectedVoiceId("");
+      setVoiceProvider('browser');
+      const defaultColor = "#d4eaf7";
+      setThemeColor(defaultColor);
+      handleThemeChange(defaultColor);
+      
+      toast({
+        title: "Preferences reset",
+        description: "All preferences have been cleared.",
+      });
+    }
+  };
+
+  const testVoice = async () => {
+    const testText = `Hi! My name is Little Sister. It is so very lovely to meet you, ${userName || "friend"}.`;
+    
+    if (voiceProvider === 'browser') {
+      // Use Web Speech API (completely free)
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(testText);
+        
+        if (selectedVoiceId) {
+          const selectedVoice = browserVoices.find(voice => voice.name === selectedVoiceId);
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+        }
+        
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        speechSynthesis.speak(utterance);
+        
+        toast({
+          title: "Voice test successful!",
+          description: "Playing browser voice - completely free!",
+        });
+      } else {
+        toast({
+          title: "Speech not supported",
+          description: "Your browser doesn't support speech synthesis.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // ElevenLabs voice testing
+      if (!elevenLabsApiKey) {
+        toast({
+          title: "API Key Required",
+          description: "Please enter your ElevenLabs API key first.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!selectedVoiceId) {
+        toast({
+          title: "Voice not selected",
+          description: "Please select an ElevenLabs voice first.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      try {
+        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + selectedVoiceId, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': elevenLabsApiKey,
+          },
+          body: JSON.stringify({
+            text: testText,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.5
+            }
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate audio');
+        }
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+
+        const selectedElevenVoice = ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId);
+        toast({
+          title: "Voice test successful!",
+          description: `Playing ${selectedElevenVoice?.name}'s voice.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Voice test failed",
+          description: "Please check your API key and try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const addEmail = () => {
+    if (newEmail && !emails.includes(newEmail)) {
+      const updatedEmails = [...emails, newEmail];
+      setEmails(updatedEmails);
+      setSelectedEmails([...selectedEmails, newEmail]);
+      setNewEmail("");
+    }
+  };
+
+  const removeEmail = (emailToRemove: string) => {
+    setEmails(emails.filter(e => e !== emailToRemove));
+    setSelectedEmails(selectedEmails.filter(e => e !== emailToRemove));
+  };
+
+  const toggleEmailSelection = (email: string) => {
+    if (selectedEmails.includes(email)) {
+      setSelectedEmails(selectedEmails.filter(e => e !== email));
+    } else {
+      setSelectedEmails([...selectedEmails, email]);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <div 
+        className="fixed left-0 top-0 bottom-0 w-4 opacity-90 z-10"
+        style={{ backgroundColor: themeColor }}
+      />
+      
+      {/* Header */}
+      <div 
+        className="w-full opacity-92 p-4 pl-12 text-foreground text-xl font-bold ml-4"
+        style={{ backgroundColor: themeColor }}
+      >
+        <Button variant="ghost" asChild className="mb-4">
+          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary">
+            ← Dashboard
+          </Link>
+        </Button>
+        Preferences
+      </div>
+      
+      {/* Main Content */}
+      <div className="ml-10 mt-9 p-8 space-y-8">
+        {/* Theme Settings */}
+        <div className="space-y-6 pb-6 border-b border-border">
+          <h2 className="text-lg font-semibold">Theme Settings</h2>
+          <div>
+            <Label htmlFor="favcolor" className="font-semibold">Theme Color:</Label>
+            <input 
+              id="favcolor"
+              type="color"
+              value={themeColor}
+              onChange={(e) => handleThemeChange(e.target.value)}
+              className="mt-1 w-16 h-8 rounded border border-border"
+            />
+          </div>
+          
+          {/* Theme Presets */}
+          <div>
+            <Label className="font-semibold">Theme Presets:</Label>
+            <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
+              {THEME_PRESETS.map((theme) => (
+                <div key={theme.name} className="space-y-2">
+                  <h4 className="text-sm font-medium text-center">{theme.name}</h4>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleThemeChange(theme.colors.light)}
+                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: theme.colors.light }}
+                      title={`${theme.name} Light`}
+                    />
+                    <button
+                      onClick={() => handleThemeChange(theme.colors.medium)}
+                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: theme.colors.medium }}
+                      title={`${theme.name} Medium`}
+                    />
+                    <button
+                      onClick={() => handleThemeChange(theme.colors.dark)}
+                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: theme.colors.dark }}
+                      title={`${theme.name} Dark`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Voice Settings */}
+        <div className="space-y-6 pb-6 border-b border-border">
+          <h2 className="text-lg font-semibold">Voice Settings</h2>
+          
+          {/* Voice Provider Selection */}
+          <div>
+            <Label className="font-semibold">Voice Provider:</Label>
+            <Select value={voiceProvider} onValueChange={(value: 'browser' | 'elevenlabs') => setVoiceProvider(value)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="browser">Browser Voices (FREE - Best for prototypes)</SelectItem>
+                <SelectItem value="elevenlabs">ElevenLabs API (Free tier: 10k chars/month)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Browser Voices */}
+          {voiceProvider === 'browser' && (
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Label htmlFor="browserVoicePicker" className="font-semibold">Browser Voice (FREE):</Label>
+                <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a browser voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {browserVoices.map((voice) => (
+                      <SelectItem key={voice.name} value={voice.name}>
+                        {voice.name} ({voice.lang}) - FREE
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Uses your device's built-in voices - completely free and no API keys needed!
+                </p>
+              </div>
+              <Button onClick={testVoice} variant="outline" className="mt-6">
+                🔊 Test Voice
+              </Button>
+            </div>
+          )}
+
+          {/* ElevenLabs API Section */}
+          {voiceProvider === 'elevenlabs' && (
+            <>
+              <div>
+                <Label htmlFor="elevenLabsApiKey" className="font-semibold">ElevenLabs API Key:</Label>
+                <Input 
+                  id="elevenLabsApiKey"
+                  type="password"
+                  value={elevenLabsApiKey}
+                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                  placeholder="Enter your ElevenLabs API key"
+                  className="mt-1"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Get your API key from{" "}
+                  <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    ElevenLabs
+                  </a>{" "}
+                  (Free tier: 10,000 characters per month)
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="elevenVoicePicker" className="font-semibold">ElevenLabs Voice:</Label>
+                  <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select an ElevenLabs voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ELEVENLABS_VOICES.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.gender}) - FREE TIER
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={testVoice} variant="outline" className="mt-6">
+                  🔊 Test Voice
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Email Settings */}
+        <div className="space-y-6 pb-6 border-b border-border">
+          <h2 className="text-lg font-semibold">Email Settings</h2>
+          
+          {/* Add Email */}
+          <div className="flex gap-2">
+            <Input 
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="Enter email address"
+              className="flex-1"
+            />
+            <Button onClick={addEmail} variant="outline">
+              Add Email
+            </Button>
+          </div>
+
+          {/* Email List */}
+          {emails.length > 0 && (
+            <div className="space-y-3">
+              <Label className="font-semibold">Your Emails:</Label>
+              {emails.map((email, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+                  <div className="flex items-center space-x-2">
+                    {emails.length > 1 && (
+                      <input
+                        type="checkbox"
+                        checked={selectedEmails.includes(email)}
+                        onChange={() => toggleEmailSelection(email)}
+                        className="rounded"
+                      />
+                    )}
+                    <span>{email}</span>
+                  </div>
+                  <Button 
+                    onClick={() => removeEmail(email)} 
+                    variant="outline" 
+                    size="sm"
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              {emails.length > 1 && (
+                <p className="text-sm text-muted-foreground">
+                  Selected emails: {selectedEmails.length} of {emails.length}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4">
+          <Button onClick={savePreferences}>
+            💾 Save Preferences
+          </Button>
+          <Button onClick={resetPreferences} variant="outline">
+            ♻️ Reset Preferences
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Preferences;
