@@ -23,12 +23,9 @@ const Index = () => {
   const navigationItems = [
     { href: "/profile", icon: "👤", title: "Profile", description: "Personal Information" },
     { href: "/preferences", icon: "⚙️", title: "Preferences", description: "Settings & Configuration" },
-    { href: "/make-it", icon: "👨‍🍳", title: "Make It With Me", description: "Cooking Assistant" },
     { href: "/tell-me", icon: "🗣️", title: "Tell Me", description: "Story Collection" },
     { href: "/history", icon: "📜", title: "History", description: "View History" },
     { href: "/chat", icon: "💬", title: "Chat With Me", description: "Conversation" },
-    { href: "/ekko", icon: "🎤", title: "Ekko", description: "Voice Assistant" },
-    { href: "/family-tree", icon: "🌳", title: "Family Tree", description: "Genealogy Visualization" },
   ];
 
   return (
@@ -44,7 +41,7 @@ const Index = () => {
         className="w-full opacity-92 p-6 pl-12 text-foreground text-2xl font-bold ml-4 border-b border-border tracking-wide min-h-[60px] flex items-center"
         style={{ backgroundColor: themeColor }}
       >
-        Little Sister Dashboard
+        Historical Discoveries
       </div>
       
       {/* Main Content */}
