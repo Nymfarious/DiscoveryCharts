@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 // ElevenLabs voices with IDs (free tier: 10k chars/month)
 const ELEVENLABS_VOICES = [
@@ -152,7 +153,7 @@ const Preferences = () => {
   };
 
   const testVoice = async () => {
-    const testText = `Hi! My name is Little Sister. It is so very lovely to meet you, ${userName || "friend"}.`;
+    const testText = `Welcome to History Discoveries! I'm your guide through time, ready to explore fascinating historical moments with you, ${userName || "explorer"}.`;
     
     if (voiceProvider === 'browser') {
       // Use Web Speech API (completely free)
@@ -189,16 +190,7 @@ const Preferences = () => {
         });
       }
     } else {
-      // ElevenLabs voice testing
-      if (!elevenLabsApiKey) {
-        toast({
-          title: "API Key Required",
-          description: "Please enter your ElevenLabs API key first.",
-          variant: "destructive"
-        });
-        return;
-      }
-
+      // ElevenLabs voice testing via secure edge function
       if (!selectedVoiceId) {
         toast({
           title: "Voice not selected",
@@ -209,31 +201,24 @@ const Preferences = () => {
       }
 
       try {
-        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + selectedVoiceId, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': elevenLabsApiKey,
-          },
-          body: JSON.stringify({
+        setIsPlaying(true);
+        const { data, error } = await supabase.functions.invoke('text-to-speech', {
+          body: { 
             text: testText,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.5
-            }
-          }),
+            voiceId: selectedVoiceId,
+            modelId: 'eleven_multilingual_v2'
+          }
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to generate audio');
-        }
+        if (error) throw error;
 
-        const audioBlob = await response.blob();
+        const audioBlob = new Blob([data], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
-        audio.play();
+        
+        audio.onended = () => setIsPlaying(false);
+        audio.onerror = () => setIsPlaying(false);
+        await audio.play();
 
         const selectedElevenVoice = ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId);
         toast({
@@ -241,9 +226,10 @@ const Preferences = () => {
           description: `Playing ${selectedElevenVoice?.name}'s voice.`,
         });
       } catch (error) {
+        setIsPlaying(false);
         toast({
           title: "Voice test failed",
-          description: "Please check your API key and try again.",
+          description: "Please ensure the API key is configured in backend settings.",
           variant: "destructive"
         });
       }
@@ -384,7 +370,7 @@ const Preferences = () => {
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground mt-1">
-              Browser voices are completely free. ElevenLabs requires an API key.
+              Browser voices are completely free. Eleven Labs voices may require Admin access - Changes Pending.
             </p>
           </div>
 
