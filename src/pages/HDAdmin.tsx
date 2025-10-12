@@ -37,14 +37,11 @@ export default function HDAdmin() {
 
   const processFiles = async (rawFiles: File[]) => {
     const processed: FileWithMetadata[] = [];
+    const zipFiles: File[] = [];
 
     for (const file of rawFiles) {
       if (file.name.endsWith('.zip')) {
-        toast({
-          title: "ZIP Support Coming Soon",
-          description: "ZIP extraction will be implemented in the edge function",
-          variant: "default",
-        });
+        zipFiles.push(file);
         continue;
       }
 
@@ -60,12 +57,67 @@ export default function HDAdmin() {
       }
     }
 
+    // Handle ZIP files via edge function
+    if (zipFiles.length > 0) {
+      await handleZipUpload(zipFiles);
+    }
+
     setFiles(prev => [...prev, ...processed]);
     
-    toast({
-      title: `${processed.length} file(s) ready`,
-      description: "Review metadata and upload",
-    });
+    if (processed.length > 0) {
+      toast({
+        title: `${processed.length} file(s) ready`,
+        description: "Review metadata and upload",
+      });
+    }
+  };
+
+  const handleZipUpload = async (zipFiles: File[]) => {
+    if (!region || !year || (mapType === "overlay" && !theme)) {
+      toast({
+        title: "Metadata Required",
+        description: "Please fill in Region, Year, and Theme (for overlays) before uploading ZIP files",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      for (const zipFile of zipFiles) {
+        const formData = new FormData();
+        formData.append('file', zipFile);
+        formData.append('mapType', mapType);
+        formData.append('region', region);
+        formData.append('year', year);
+        if (theme) formData.append('theme', theme);
+
+        toast({
+          title: "Processing ZIP",
+          description: `Extracting and uploading ${zipFile.name}...`,
+        });
+
+        const { data, error } = await supabase.functions.invoke('unzip-upload', {
+          body: formData,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "ZIP Upload Complete",
+          description: `Successfully processed ${data.processedCount} files from ${zipFile.name}`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "ZIP Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const extractImageMetadata = (file: File): Promise<FileWithMetadata> => {
