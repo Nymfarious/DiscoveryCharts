@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Home, Shield } from "lucide-react";
+import { User, Home, Shield, Upload } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Profile = () => {
   const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
@@ -14,12 +15,14 @@ const Profile = () => {
   const [userEmail, setUserEmail] = useState<string>("");
   const [secondaryEmail, setSecondaryEmail] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   useEffect(() => {
     // Load profile data
     setUserName(localStorage.getItem("username") || "");
     setCityState(localStorage.getItem("cityState") || "");
     setSecondaryEmail(localStorage.getItem("secondaryEmail") || "");
+    setAvatarUrl(localStorage.getItem("avatarUrl") || "");
     
     const color = localStorage.getItem("favcolor") || "#d4eaf7";
     setThemeColor(color);
@@ -51,6 +54,7 @@ const Profile = () => {
     localStorage.setItem("username", userName);
     localStorage.setItem("cityState", cityState);
     localStorage.setItem("secondaryEmail", secondaryEmail);
+    localStorage.setItem("avatarUrl", avatarUrl);
     
     // Update secondary email in Supabase profile if needed
     if (secondaryEmail) {
@@ -74,15 +78,28 @@ const Profile = () => {
       localStorage.removeItem("username");
       localStorage.removeItem("cityState");
       localStorage.removeItem("secondaryEmail");
+      localStorage.removeItem("avatarUrl");
       
       setUserName("");
       setCityState("");
       setSecondaryEmail("");
+      setAvatarUrl("");
       
       toast({
         title: "Profile reset",
         description: "Profile information has been cleared.",
       });
+    }
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -136,6 +153,32 @@ const Profile = () => {
               <User className="w-6 h-6 text-[hsl(var(--brass))]" />
               Personal Information
             </h2>
+
+          <div className="flex items-center gap-6">
+            <div>
+              <Avatar className="w-16 h-16 border-2 border-[hsl(var(--brass))]">
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback className="bg-[hsl(var(--muted))] text-[hsl(var(--brass))]">
+                  {userName ? userName[0].toUpperCase() : <User className="w-6 h-6" />}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="avatarUpload" className="font-semibold text-sm mb-2 block">Profile Picture:</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="avatarUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="border-[hsl(var(--border))]"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 italic">
+                Upload a photo or choose from the gallery
+              </p>
+            </div>
+          </div>
 
           <div>
             <Label htmlFor="userEmail" className="font-semibold text-sm">Registered Email (from Auth):</Label>

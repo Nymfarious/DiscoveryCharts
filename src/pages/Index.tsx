@@ -170,6 +170,17 @@ const Index = () => {
                         <User className="w-4 h-4" />
                         Profile
                       </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/dev-tools"
+                          className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                                   transition-colors flex items-center gap-2 border-t border-[hsl(var(--border))]"
+                          onClick={() => setSettingsOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Dev Tools
+                        </Link>
+                      )}
                       <button
                         onClick={() => {
                           setSettingsOpen(false);

@@ -28,7 +28,7 @@ export default function PosterPicker({ onOpen }: { onOpen: (id: string) => void 
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error loading posters:', error);
+      console.error('Error loading charts:', error);
     } else {
       setItems(data || []);
     }
@@ -38,7 +38,7 @@ export default function PosterPicker({ onOpen }: { onOpen: (id: string) => void 
   if (loading) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        Loading posters...
+        Loading historical charts...
       </div>
     );
   }
@@ -47,9 +47,9 @@ export default function PosterPicker({ onOpen }: { onOpen: (id: string) => void 
     return (
       <div className="text-center py-12 space-y-3">
         <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/50" />
-        <p className="text-muted-foreground">No posters yet</p>
+        <p className="text-muted-foreground">No charts in collection yet</p>
         <p className="text-sm text-muted-foreground">
-          Admin users can add posters via the Ingest page
+          Admin users can upload maps via Dev Tools
         </p>
       </div>
     );

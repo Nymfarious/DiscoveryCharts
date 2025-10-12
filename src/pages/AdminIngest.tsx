@@ -71,7 +71,7 @@ export default function AdminIngest() {
 
       if (error) throw error;
 
-      toast.success('Poster ingested successfully!');
+      toast.success('Historical chart uploaded successfully!');
       setFile(null);
       setTitle('');
       setCredit('© Demo — Not for distribution');
@@ -82,7 +82,7 @@ export default function AdminIngest() {
       if (fileInput) fileInput.value = '';
     } catch (error: any) {
       console.error('Ingest error:', error);
-      toast.error(error.message || 'Failed to ingest poster');
+      toast.error(error.message || 'Failed to upload chart');
     } finally {
       setLoading(false);
     }
@@ -108,14 +108,14 @@ export default function AdminIngest() {
 
   return (
     <div className="container max-w-2xl mx-auto p-4 md:p-8">
-      <Card>
+      <Card className="bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))] shadow-xl">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            <CardTitle>Admin Ingest</CardTitle>
+            <Upload className="w-5 h-5 text-[hsl(var(--brass))]" />
+            <CardTitle style={{ fontFamily: 'Georgia, serif' }}>Chart Upload</CardTitle>
           </div>
           <CardDescription>
-            Upload and process high-resolution historical images
+            Upload high-resolution historical maps and navigational charts
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -176,17 +176,18 @@ export default function AdminIngest() {
             disabled={loading || !file || !title.trim()}
             className="w-full"
             size="lg"
+            variant="brass"
           >
-            {loading ? 'Ingesting...' : 'Ingest Poster'}
+            {loading ? 'Processing...' : 'Upload Historical Chart'}
           </Button>
 
-          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+          <div className="bg-[hsl(var(--muted))]/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1 border border-[hsl(var(--border))]">
             <p className="font-medium">Process Overview:</p>
             <ol className="list-decimal list-inside space-y-1 ml-2">
-              <li>Image uploaded to secure storage</li>
-              <li>Watermark applied to protect source</li>
+              <li>Chart uploaded to secure archive</li>
+              <li>Watermark applied for protection</li>
               <li>Deep zoom tiles generated</li>
-              <li>Poster added to library</li>
+              <li>Added to historical collection</li>
             </ol>
           </div>
         </CardContent>

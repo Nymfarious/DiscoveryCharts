@@ -229,8 +229,8 @@ const History = () => {
                   <PosterPicker key={refreshKey} onOpen={handleOpenPoster} />
                   <div className="flex justify-end pt-4 border-t border-[hsl(var(--border))]">
                     <Button 
-                      variant="outline" 
-                      className="border-[hsl(var(--brass))] text-[hsl(var(--brass))] hover:bg-[hsl(var(--brass))] hover:text-[hsl(var(--parchment))]"
+                      variant="brass"
+                      size="lg"
                       disabled
                     >
                       <MapPin className="w-4 h-4 mr-2" />
