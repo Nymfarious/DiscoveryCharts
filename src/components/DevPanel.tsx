@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, X, ChevronUp, Map } from "lucide-react";
+import { Shield, X, ChevronUp, Map, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminIngest from "@/pages/AdminIngest";
+import HDAdmin from "@/pages/HDAdmin";
 
 interface DevPanelProps {
   isOpen: boolean;
@@ -79,24 +80,40 @@ export function DevPanel({ isOpen, onClose }: DevPanelProps) {
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto px-6 py-6" style={{ maxHeight: 'calc(85vh - 60px)' }}>
-          <div className="max-w-6xl mx-auto">
-            {/* Header Card */}
-            <Card className="bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))] shadow-xl mb-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* HD Admin Upload System */}
+            <Card className="bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))] shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-[hsl(var(--brass))]" />
+                  <CardTitle style={{ fontFamily: 'Georgia, serif' }}>HD Admin - Base Maps & Overlays</CardTitle>
+                </div>
+                <CardDescription>
+                  Upload high-resolution historical maps with automatic metadata extraction and normalized storage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HDAdmin />
+              </CardContent>
+            </Card>
+
+            {/* Legacy Chart Uploader */}
+            <Card className="bg-[hsl(var(--card))] border-2 border-[hsl(var(--border))] shadow-lg">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Map className="w-5 h-5 text-[hsl(var(--brass))]" />
-                  <CardTitle style={{ fontFamily: 'Georgia, serif' }}>Historical Chart Uploader</CardTitle>
+                  <CardTitle style={{ fontFamily: 'Georgia, serif' }}>Legacy Chart Uploader</CardTitle>
                 </div>
                 <CardDescription>
-                  Upload high-resolution historical maps and charts to your collection
+                  Original poster/chart upload system (deprecated - use HD Admin above)
                 </CardDescription>
               </CardHeader>
+              <CardContent>
+                <div className="bg-[hsl(var(--parchment))] rounded-lg p-4">
+                  <AdminIngest />
+                </div>
+              </CardContent>
             </Card>
-
-            {/* Admin Ingest Component */}
-            <div className="bg-[hsl(var(--parchment))] rounded-lg p-4">
-              <AdminIngest />
-            </div>
           </div>
         </div>
       </div>
