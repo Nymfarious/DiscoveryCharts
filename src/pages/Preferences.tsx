@@ -55,6 +55,13 @@ const Preferences = () => {
   const [voiceProvider, setVoiceProvider] = useState<'browser' | 'elevenlabs'>('browser');
   const [userName, setUserName] = useState<string>("");
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [trustedSources, setTrustedSources] = useState<string[]>([
+    "wikipedia.org",
+    "loc.gov",
+    "britishmuseum.org"
+  ]);
 
   useEffect(() => {
     // Load browser voices
@@ -75,6 +82,11 @@ const Preferences = () => {
     setVoiceProvider(localStorage.getItem("voiceProvider") as 'browser' | 'elevenlabs' || 'browser');
     setUserName(localStorage.getItem("username") || "");
     
+    const savedSources = localStorage.getItem("trustedSources");
+    if (savedSources) {
+      setTrustedSources(JSON.parse(savedSources));
+    }
+    
     const color = localStorage.getItem("favcolor") || "#d4eaf7";
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
@@ -92,6 +104,7 @@ const Preferences = () => {
     localStorage.setItem("voiceProvider", voiceProvider);
     localStorage.setItem("userEmails", JSON.stringify(emails));
     localStorage.setItem("selectedEmails", JSON.stringify(selectedEmails));
+    localStorage.setItem("trustedSources", JSON.stringify(trustedSources));
     
     toast({
       title: "Preferences saved!",
@@ -125,6 +138,14 @@ const Preferences = () => {
     }
   };
 
+  const stopVoice = () => {
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      setIsPlaying(false);
+      setCurrentUtterance(null);
+    }
+  };
+
   const testVoice = async () => {
     const testText = `Hi! My name is Little Sister. It is so very lovely to meet you, ${userName || "friend"}.`;
     
@@ -144,6 +165,11 @@ const Preferences = () => {
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
         
+        utterance.onstart = () => setIsPlaying(true);
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => setIsPlaying(false);
+        
+        setCurrentUtterance(utterance);
         speechSynthesis.speak(utterance);
         
         toast({
@@ -315,91 +341,73 @@ const Preferences = () => {
         <div className="space-y-6 pb-6 border-b border-border">
           <h2 className="text-lg font-semibold">Voice Settings</h2>
           
-          {/* Voice Provider Selection */}
+          {/* Unified Voice Selection */}
           <div>
-            <Label className="font-semibold">Voice Provider:</Label>
-            <Select value={voiceProvider} onValueChange={(value: 'browser' | 'elevenlabs') => setVoiceProvider(value)}>
+            <Label className="font-semibold">Select Voice:</Label>
+            <Select 
+              value={`${voiceProvider}:${selectedVoiceId}`} 
+              onValueChange={(value) => {
+                const [provider, voiceId] = value.split(':');
+                setVoiceProvider(provider as 'browser' | 'elevenlabs');
+                setSelectedVoiceId(voiceId);
+              }}
+            >
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Choose a voice" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="browser">Browser Voices (FREE - Best for prototypes)</SelectItem>
-                <SelectItem value="elevenlabs">ElevenLabs API (Free tier: 10k chars/month)</SelectItem>
+              <SelectContent className="max-h-[300px]">
+                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">Browser Voices (FREE)</div>
+                {browserVoices.map((voice) => (
+                  <SelectItem key={`browser:${voice.name}`} value={`browser:${voice.name}`}>
+                    {voice.name} (Browser - FREE)
+                  </SelectItem>
+                ))}
+                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-t mt-2 pt-2">ElevenLabs (Premium)</div>
+                {ELEVENLABS_VOICES.map((voice) => (
+                  <SelectItem key={`elevenlabs:${voice.id}`} value={`elevenlabs:${voice.id}`}>
+                    {voice.name} (ElevenLabs)
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground mt-1">
+              Browser voices are completely free. ElevenLabs requires an API key.
+            </p>
           </div>
 
-          {/* Browser Voices */}
-          {voiceProvider === 'browser' && (
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label htmlFor="browserVoicePicker" className="font-semibold">Browser Voice (FREE):</Label>
-                <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a browser voice" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {browserVoices.map((voice) => (
-                      <SelectItem key={voice.name} value={voice.name}>
-                        {voice.name} ({voice.lang}) - FREE
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Uses your device's built-in voices - completely free and no API keys needed!
-                </p>
-              </div>
-              <Button onClick={testVoice} variant="outline" className="mt-6">
-                🔊 Test Voice
-              </Button>
+          {/* ElevenLabs API Key (only shown when ElevenLabs voice selected) */}
+          {voiceProvider === 'elevenlabs' && (
+            <div>
+              <Label htmlFor="elevenLabsApiKey" className="font-semibold">ElevenLabs API Key:</Label>
+              <Input 
+                id="elevenLabsApiKey"
+                type="password"
+                value={elevenLabsApiKey}
+                onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                placeholder="Enter your ElevenLabs API key"
+                className="mt-1"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Get your API key from{" "}
+                <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  ElevenLabs
+                </a>{" "}
+                (Free tier: 10,000 characters per month)
+              </p>
             </div>
           )}
 
-          {/* ElevenLabs API Section */}
-          {voiceProvider === 'elevenlabs' && (
-            <>
-              <div>
-                <Label htmlFor="elevenLabsApiKey" className="font-semibold">ElevenLabs API Key:</Label>
-                <Input 
-                  id="elevenLabsApiKey"
-                  type="password"
-                  value={elevenLabsApiKey}
-                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
-                  placeholder="Enter your ElevenLabs API key"
-                  className="mt-1"
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Get your API key from{" "}
-                  <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                    ElevenLabs
-                  </a>{" "}
-                  (Free tier: 10,000 characters per month)
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="elevenVoicePicker" className="font-semibold">ElevenLabs Voice:</Label>
-                  <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select an ElevenLabs voice" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ELEVENLABS_VOICES.map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id}>
-                          {voice.name} ({voice.gender}) - FREE TIER
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={testVoice} variant="outline" className="mt-6">
-                  🔊 Test Voice
-                </Button>
-              </div>
-            </>
-          )}
+          {/* Voice Test Controls */}
+          <div className="flex items-center gap-2">
+            <Button onClick={testVoice} variant="outline" disabled={isPlaying}>
+              🔊 Test Voice
+            </Button>
+            {isPlaying && (
+              <Button onClick={stopVoice} variant="outline" className="bg-destructive/10 hover:bg-destructive/20">
+                ⏹️ Stop
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Email Settings */}
@@ -454,6 +462,53 @@ const Preferences = () => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Trusted Sources (Zippy) */}
+        <div className="space-y-6 pb-6 border-b border-border">
+          <h2 className="text-lg font-semibold">Trusted Historical Sources (Zippy)</h2>
+          <p className="text-sm text-muted-foreground">
+            Search agents will prioritize results from these trusted domains when researching historical topics.
+          </p>
+          
+          <div className="space-y-3">
+            {trustedSources.map((source, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input 
+                  value={source}
+                  onChange={(e) => {
+                    const updated = [...trustedSources];
+                    updated[index] = e.target.value;
+                    setTrustedSources(updated);
+                  }}
+                  placeholder="e.g., wikipedia.org"
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={() => setTrustedSources(trustedSources.filter((_, i) => i !== index))}
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10"
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+          
+          {trustedSources.length < 5 && (
+            <Button 
+              onClick={() => setTrustedSources([...trustedSources, ""])}
+              variant="outline"
+              size="sm"
+            >
+              + Add Source
+            </Button>
+          )}
+          
+          <p className="text-xs text-muted-foreground">
+            Maximum 5 trusted sources. Enter domain names only (e.g., loc.gov, not https://loc.gov)
+          </p>
         </div>
 
         {/* Action Buttons */}

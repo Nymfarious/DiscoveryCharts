@@ -21,11 +21,12 @@ const Index = () => {
   }, []);
 
   const navigationItems = [
-    { href: "/profile", icon: "👤", title: "Profile", description: "Personal Information" },
-    { href: "/preferences", icon: "⚙️", title: "Preferences", description: "Settings & Configuration" },
-    { href: "/tell-me", icon: "🗣️", title: "Tell Me", description: "Story Collection" },
     { href: "/history", icon: "📜", title: "History", description: "View History" },
     { href: "/chat", icon: "💬", title: "Chat With Me", description: "Conversation" },
+    { href: "/settings", icon: "⚙️", title: "Settings", description: "Settings & Configuration", submenu: [
+      { href: "/preferences", title: "Preferences" },
+      { href: "/profile", title: "Profile" }
+    ]},
   ];
 
   return (
@@ -52,27 +53,39 @@ const Index = () => {
         
         <div className="flex flex-wrap gap-6 mt-6">
           {navigationItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
-              title={item.description}
-            >
-              <span className="text-4xl mb-2">{item.icon}</span>
-              <span className="text-lg">{item.title}</span>
-            </Link>
+            <div key={item.href} className="relative group">
+              <Link
+                to={item.href}
+                className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
+                title={item.description}
+              >
+                <span className="text-4xl mb-2">{item.icon}</span>
+                <span className="text-lg">{item.title}</span>
+              </Link>
+              
+              {/* Settings submenu */}
+              {item.submenu && (
+                <div className="absolute left-0 top-full mt-2 bg-card border-2 border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 min-w-[160px]">
+                  {item.submenu.map((subItem) => (
+                    <Link
+                      key={subItem.href}
+                      to={subItem.href}
+                      className="block px-4 py-3 text-foreground hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      {subItem.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
           
-          {proveItEnabled && (
-            <Link
-              to="/prove-it"
-              className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
-              title="Prove It - Fact Checker"
-            >
-              <span className="text-4xl mb-2">🔎</span>
-              <span className="text-lg">Prove It</span>
-            </Link>
-          )}
+          {/* Placeholder for future Tell Me feature */}
+          <div className="flex flex-col items-center bg-muted/50 border-2 border-dashed border-border rounded-xl p-6 min-w-[130px] min-h-[100px] text-muted-foreground font-semibold opacity-50 cursor-not-allowed" title="Coming Soon">
+            <span className="text-4xl mb-2">🗣️</span>
+            <span className="text-lg">Tell Me</span>
+            <span className="text-xs mt-1">(Coming Soon)</span>
+          </div>
         </div>
       </div>
     </div>

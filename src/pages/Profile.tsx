@@ -2,31 +2,52 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
   const [userName, setUserName] = useState<string>("");
-  const [sisterName, setSisterName] = useState<string>("");
-  const [proveItEnabled, setProveItEnabled] = useState<boolean>(false);
+  const [cityState, setCityState] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [secondaryEmail, setSecondaryEmail] = useState<string>("");
 
   useEffect(() => {
     // Load profile data
     setUserName(localStorage.getItem("username") || "");
-    setSisterName(localStorage.getItem("sisterName") || "");
-    setProveItEnabled(localStorage.getItem("proveItEnabled") === "1");
+    setCityState(localStorage.getItem("cityState") || "");
+    setSecondaryEmail(localStorage.getItem("secondaryEmail") || "");
     
     const color = localStorage.getItem("favcolor") || "#d4eaf7";
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
+    
+    // Load user email from Supabase
+    const loadUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    loadUserEmail();
   }, []);
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     localStorage.setItem("username", userName);
-    localStorage.setItem("sisterName", sisterName);
-    localStorage.setItem("proveItEnabled", proveItEnabled ? "1" : "");
+    localStorage.setItem("cityState", cityState);
+    localStorage.setItem("secondaryEmail", secondaryEmail);
+    
+    // Update secondary email in Supabase profile if needed
+    if (secondaryEmail) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').upsert({
+          user_id: user.id,
+          secondary_email: secondaryEmail
+        });
+      }
+    }
     
     toast({
       title: "Profile saved!",
@@ -37,12 +58,12 @@ const Profile = () => {
   const resetProfile = () => {
     if (confirm("Reset profile information?")) {
       localStorage.removeItem("username");
-      localStorage.removeItem("sisterName");
-      localStorage.removeItem("proveItEnabled");
+      localStorage.removeItem("cityState");
+      localStorage.removeItem("secondaryEmail");
       
       setUserName("");
-      setSisterName("");
-      setProveItEnabled(false);
+      setCityState("");
+      setSecondaryEmail("");
       
       toast({
         title: "Profile reset",
@@ -74,7 +95,18 @@ const Profile = () => {
       
       {/* Main Content */}
       <div className="ml-10 mt-9 p-8 space-y-8">
-        {/* Basic Info Section */}
+        {/* Account Info Section */}
+        <div className="space-y-4 pb-6 border-b border-border">
+          <h2 className="text-lg font-semibold">Account Information</h2>
+          {userEmail && (
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <Label className="font-semibold text-sm">Registered Email:</Label>
+              <p className="text-lg mt-1">{userEmail}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Personal Information Section */}
         <div className="space-y-4 pb-6 border-b border-border">
           <h2 className="text-lg font-semibold">Personal Information</h2>
           <div>
@@ -89,30 +121,29 @@ const Profile = () => {
             />
           </div>
           <div>
-            <Label htmlFor="sisterName" className="font-semibold">Little Sister's Name:</Label>
+            <Label htmlFor="cityState" className="font-semibold">City / State:</Label>
             <Input 
-              id="sisterName"
+              id="cityState"
               type="text"
-              value={sisterName}
-              onChange={(e) => setSisterName(e.target.value)}
+              value={cityState}
+              onChange={(e) => setCityState(e.target.value)}
               className="text-lg mt-1"
-              placeholder="Enter little sister's name"
+              placeholder="e.g., Boston, MA"
             />
           </div>
-        </div>
-
-        {/* Feature Settings */}
-        <div className="space-y-6 pb-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Feature Settings</h2>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="enableProveIt"
-              checked={proveItEnabled}
-              onCheckedChange={(checked) => setProveItEnabled(checked === true)}
+          <div>
+            <Label htmlFor="secondaryEmail" className="font-semibold">Recovery Email (Optional):</Label>
+            <Input 
+              id="secondaryEmail"
+              type="email"
+              value={secondaryEmail}
+              onChange={(e) => setSecondaryEmail(e.target.value)}
+              className="text-lg mt-1"
+              placeholder="Secondary recovery email"
             />
-            <Label htmlFor="enableProveIt" className="font-semibold">
-              Enable Prove It (Fact Checker tab)
-            </Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Used for account recovery and important notifications
+            </p>
           </div>
         </div>
 
