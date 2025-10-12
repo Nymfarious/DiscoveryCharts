@@ -3,9 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Palette, 
+  Volume2, 
+  Mail, 
+  Shield, 
+  Save, 
+  RotateCcw, 
+  User,
+  ArrowLeft,
+  Play,
+  Square
+} from "lucide-react";
 
 // ElevenLabs voices with IDs (free tier: 10k chars/month)
 const ELEVENLABS_VOICES = [
@@ -254,245 +268,341 @@ const Preferences = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
+    <div className="min-h-screen">
+      {/* Sidebar Accent */}
       <div 
-        className="fixed left-0 top-0 bottom-0 w-4 opacity-90 z-10"
-        style={{ backgroundColor: themeColor }}
+        className="fixed left-0 top-0 bottom-0 w-1 opacity-80 z-10 bg-primary"
       />
       
       {/* Header */}
-      <div 
-        className="w-full opacity-92 p-4 pl-12 text-foreground text-xl font-bold ml-4"
-        style={{ backgroundColor: themeColor }}
-      >
-        <Button variant="ghost" asChild className="mb-4">
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary">
-            ← Dashboard
-          </Link>
-        </Button>
-        Preferences
-      </div>
+      <header className="sticky top-0 z-20 backdrop-blur-sm bg-card/80 border-b border-border shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/" className="flex items-center gap-2 hover:text-primary transition-colors">
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Dashboard</span>
+              </Link>
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              <h1 className="text-2xl font-bold text-foreground">Preferences & Profile</h1>
+            </div>
+          </div>
+        </div>
+      </header>
       
       {/* Main Content */}
-      <div className="ml-10 mt-9 p-8 space-y-8">
-        {/* Theme Settings */}
-        <div className="space-y-6 pb-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Theme Settings</h2>
-          <div>
-            <Label htmlFor="favcolor" className="font-semibold">Theme Color:</Label>
-            <input 
-              id="favcolor"
-              type="color"
-              value={themeColor}
-              onChange={(e) => handleThemeChange(e.target.value)}
-              className="mt-1 w-16 h-8 rounded border border-border"
-            />
-          </div>
-          
-          {/* Theme Presets */}
-          <div>
-            <Label className="font-semibold">Theme Presets:</Label>
-            <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-              {THEME_PRESETS.map((theme) => (
-                <div key={theme.name} className="space-y-2">
-                  <div className="flex items-center justify-center gap-1">
-                    <h4 className="text-sm font-medium text-center">{theme.name}</h4>
-                    {theme.name === "Vintage Cartographer" && <span className="text-lg">🗺️</span>}
-                  </div>
-                  {'description' in theme && (
-                    <p className="text-xs text-muted-foreground text-center italic">
-                      {theme.description}
-                    </p>
-                  )}
-                  <div className="flex gap-1 justify-center">
-                    <button
-                      onClick={() => handleThemeChange(theme.colors.light)}
-                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
-                      style={{ backgroundColor: theme.colors.light }}
-                      title={`${theme.name} Light`}
-                    />
-                    <button
-                      onClick={() => handleThemeChange(theme.colors.medium)}
-                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
-                      style={{ backgroundColor: theme.colors.medium }}
-                      title={`${theme.name} Medium`}
-                    />
-                    <button
-                      onClick={() => handleThemeChange(theme.colors.dark)}
-                      className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"
-                      style={{ backgroundColor: theme.colors.dark }}
-                      title={`${theme.name} Dark`}
-                    />
-                  </div>
+      <main className="container mx-auto px-6 py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Theme Settings Card */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Palette className="h-5 w-5 text-primary" />
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                <div>
+                  <CardTitle>Theme Customization</CardTitle>
+                  <CardDescription>Personalize your visual experience</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="favcolor" className="text-sm font-medium">Custom Color</Label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    id="favcolor"
+                    type="color"
+                    value={themeColor}
+                    onChange={(e) => handleThemeChange(e.target.value)}
+                    className="w-16 h-10 rounded-md border-2 border-border cursor-pointer"
+                  />
+                  <span className="text-sm text-muted-foreground">Click to choose your accent color</span>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Theme Presets */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Quick Themes</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {THEME_PRESETS.map((theme) => (
+                    <div key={theme.name} className="space-y-2">
+                      <div className="flex items-center justify-center gap-1">
+                        <h4 className="text-xs font-medium text-center">{theme.name}</h4>
+                        {theme.name === "Vintage Cartographer" && <span className="text-sm">🗺️</span>}
+                      </div>
+                      {'description' in theme && (
+                        <p className="text-xs text-muted-foreground text-center italic leading-tight">
+                          {theme.description}
+                        </p>
+                      )}
+                      <div className="flex gap-1 justify-center">
+                        <button
+                          onClick={() => handleThemeChange(theme.colors.light)}
+                          className="w-9 h-9 rounded-md border-2 border-border hover:scale-110 hover:border-primary transition-all shadow-sm"
+                          style={{ backgroundColor: theme.colors.light }}
+                          title={`${theme.name} Light`}
+                          aria-label={`${theme.name} Light theme`}
+                        />
+                        <button
+                          onClick={() => handleThemeChange(theme.colors.medium)}
+                          className="w-9 h-9 rounded-md border-2 border-border hover:scale-110 hover:border-primary transition-all shadow-sm"
+                          style={{ backgroundColor: theme.colors.medium }}
+                          title={`${theme.name} Medium`}
+                          aria-label={`${theme.name} Medium theme`}
+                        />
+                        <button
+                          onClick={() => handleThemeChange(theme.colors.dark)}
+                          className="w-9 h-9 rounded-md border-2 border-border hover:scale-110 hover:border-primary transition-all shadow-sm"
+                          style={{ backgroundColor: theme.colors.dark }}
+                          title={`${theme.name} Dark`}
+                          aria-label={`${theme.name} Dark theme`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Voice Settings */}
-        <div className="space-y-6 pb-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Voice Settings</h2>
-          
-          {/* Unified Voice Selection */}
-          <div>
-            <Label className="font-semibold">Select Voice:</Label>
-            <Select 
-              value={`${voiceProvider}:${selectedVoiceId}`} 
-              onValueChange={(value) => {
-                const [provider, voiceId] = value.split(':');
-                setVoiceProvider(provider as 'browser' | 'elevenlabs');
-                setSelectedVoiceId(voiceId);
-              }}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Choose a voice" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">Browser Voices (FREE)</div>
-                {browserVoices.map((voice) => (
-                  <SelectItem key={`browser:${voice.name}`} value={`browser:${voice.name}`}>
-                    {voice.name} (Browser - FREE)
-                  </SelectItem>
-                ))}
-                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-t mt-2 pt-2">ElevenLabs (Premium)</div>
-                {ELEVENLABS_VOICES.map((voice) => (
-                  <SelectItem key={`elevenlabs:${voice.id}`} value={`elevenlabs:${voice.id}`}>
-                    {voice.name} (ElevenLabs)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground mt-1">
-              Browser voices are completely free. ElevenLabs voices use secure backend configuration.
-            </p>
-          </div>
+          {/* Voice Settings Card */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Volume2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Voice & Audio</CardTitle>
+                  <CardDescription>Configure text-to-speech preferences</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Voice Selection</Label>
+                <Select 
+                  value={`${voiceProvider}:${selectedVoiceId}`} 
+                  onValueChange={(value) => {
+                    const [provider, voiceId] = value.split(':');
+                    setVoiceProvider(provider as 'browser' | 'elevenlabs');
+                    setSelectedVoiceId(voiceId);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a voice" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] bg-popover z-50">
+                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">Browser Voices (FREE)</div>
+                    {browserVoices.map((voice) => (
+                      <SelectItem key={`browser:${voice.name}`} value={`browser:${voice.name}`}>
+                        {voice.name} (Browser - FREE)
+                      </SelectItem>
+                    ))}
+                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-t mt-2 pt-2">ElevenLabs (Premium)</div>
+                    {ELEVENLABS_VOICES.map((voice) => (
+                      <SelectItem key={`elevenlabs:${voice.id}`} value={`elevenlabs:${voice.id}`}>
+                        {voice.name} (ElevenLabs)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Browser voices are completely free. ElevenLabs voices use secure backend configuration.
+                </p>
+              </div>
 
-          {/* Voice Test Controls */}
-          <div className="flex items-center gap-2">
-            <Button onClick={testVoice} variant="outline" disabled={isPlaying}>
-              🔊 Test Voice
-            </Button>
-            {isPlaying && (
-              <Button onClick={stopVoice} variant="outline" className="bg-destructive/10 hover:bg-destructive/20">
-                ⏹️ Stop
-              </Button>
-            )}
-          </div>
-        </div>
+              <Separator />
 
-        {/* Email Settings */}
-        <div className="space-y-6 pb-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Email Settings</h2>
-          
-          {/* Add Email */}
-          <div className="flex gap-2">
-            <Input 
-              type="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="Enter email address"
-              className="flex-1"
-            />
-            <Button onClick={addEmail} variant="outline">
-              Add Email
-            </Button>
-          </div>
-
-          {/* Email List */}
-          {emails.length > 0 && (
-            <div className="space-y-3">
-              <Label className="font-semibold">Your Emails:</Label>
-              {emails.map((email, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
-                  <div className="flex items-center space-x-2">
-                    {emails.length > 1 && (
-                      <input
-                        type="checkbox"
-                        checked={selectedEmails.includes(email)}
-                        onChange={() => toggleEmailSelection(email)}
-                        className="rounded"
-                      />
-                    )}
-                    <span>{email}</span>
-                  </div>
+              {/* Voice Test Controls */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Test Audio</Label>
+                <div className="flex items-center gap-2">
                   <Button 
-                    onClick={() => removeEmail(email)} 
+                    onClick={testVoice} 
                     variant="outline" 
-                    size="sm"
-                    className="text-destructive hover:bg-destructive/10"
+                    disabled={isPlaying}
+                    className="flex items-center gap-2"
                   >
-                    Remove
+                    <Play className="h-4 w-4" />
+                    Test Voice
+                  </Button>
+                  {isPlaying && (
+                    <Button 
+                      onClick={stopVoice} 
+                      variant="outline" 
+                      className="flex items-center gap-2 bg-destructive/10 hover:bg-destructive/20"
+                    >
+                      <Square className="h-4 w-4" />
+                      Stop
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Email Settings Card */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Mail className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Email Management</CardTitle>
+                  <CardDescription>Manage your email addresses</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Add Email */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Add New Email</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="flex-1"
+                  />
+                  <Button onClick={addEmail} variant="default" size="sm">
+                    Add
                   </Button>
                 </div>
-              ))}
-              {emails.length > 1 && (
-                <p className="text-sm text-muted-foreground">
-                  Selected emails: {selectedEmails.length} of {emails.length}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
 
-        {/* Trusted Sources (Zippy) */}
-        <div className="space-y-6 pb-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Trusted Historical Sources (Zippy)</h2>
-          <p className="text-sm text-muted-foreground">
-            Search agents will prioritize results from these trusted domains when researching historical topics.
-          </p>
-          
-          <div className="space-y-3">
-            {trustedSources.map((source, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input 
-                  value={source}
-                  onChange={(e) => {
-                    const updated = [...trustedSources];
-                    updated[index] = e.target.value;
-                    setTrustedSources(updated);
-                  }}
-                  placeholder="e.g., wikipedia.org"
-                  className="flex-1"
-                />
+              {/* Email List */}
+              {emails.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Your Emails</Label>
+                    <div className="space-y-2">
+                      {emails.map((email, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            {emails.length > 1 && (
+                              <input
+                                type="checkbox"
+                                checked={selectedEmails.includes(email)}
+                                onChange={() => toggleEmailSelection(email)}
+                                className="rounded border-border"
+                              />
+                            )}
+                            <span className="text-sm">{email}</span>
+                          </div>
+                          <Button 
+                            onClick={() => removeEmail(email)} 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    {emails.length > 1 && (
+                      <p className="text-xs text-muted-foreground">
+                        {selectedEmails.length} of {emails.length} email{emails.length > 1 ? 's' : ''} selected
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Trusted Sources Card */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Trusted Historical Sources</CardTitle>
+                  <CardDescription>Configure reliable sources for research agents</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Search agents will prioritize results from these trusted domains when researching historical topics.
+              </p>
+              
+              <div className="space-y-3">
+                {trustedSources.map((source, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input 
+                      value={source}
+                      onChange={(e) => {
+                        const updated = [...trustedSources];
+                        updated[index] = e.target.value;
+                        setTrustedSources(updated);
+                      }}
+                      placeholder="e.g., wikipedia.org"
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={() => setTrustedSources(trustedSources.filter((_, i) => i !== index))}
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              {trustedSources.length < 5 && (
                 <Button 
-                  onClick={() => setTrustedSources(trustedSources.filter((_, i) => i !== index))}
+                  onClick={() => setTrustedSources([...trustedSources, ""])}
                   variant="outline"
                   size="sm"
-                  className="text-destructive hover:bg-destructive/10"
+                  className="w-full"
                 >
-                  Remove
+                  + Add Source
                 </Button>
-              </div>
-            ))}
-          </div>
-          
-          {trustedSources.length < 5 && (
-            <Button 
-              onClick={() => setTrustedSources([...trustedSources, ""])}
-              variant="outline"
-              size="sm"
-            >
-              + Add Source
-            </Button>
-          )}
-          
-          <p className="text-xs text-muted-foreground">
-            Maximum 5 trusted sources. Enter domain names only (e.g., loc.gov, not https://loc.gov)
-          </p>
-        </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground italic">
+                Maximum 5 trusted sources. Enter domain names only (e.g., loc.gov, not https://loc.gov)
+              </p>
+            </CardContent>
+          </Card>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Button onClick={savePreferences}>
-            💾 Save Preferences
-          </Button>
-          <Button onClick={resetPreferences} variant="outline">
-            ♻️ Reset Preferences
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button 
+              onClick={savePreferences}
+              className="flex items-center gap-2 flex-1"
+              size="lg"
+            >
+              <Save className="h-4 w-4" />
+              Save All Preferences
+            </Button>
+            <Button 
+              onClick={resetPreferences} 
+              variant="outline"
+              className="flex items-center gap-2 flex-1"
+              size="lg"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset to Defaults
+            </Button>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
