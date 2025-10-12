@@ -1,109 +1,202 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { MapPin, MessageSquare, User, Settings, Activity } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [username, setUsername] = useState<string>("");
   const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
-  const [proveItEnabled, setProveItEnabled] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
-    // Load user preferences from localStorage
     const name = localStorage.getItem("username") || "";
     const color = localStorage.getItem("favcolor") || "#d4eaf7";
-    const proveIt = localStorage.getItem("proveItEnabled") === "true";
     
     setUsername(name);
     setThemeColor(color);
-    setProveItEnabled(proveIt);
-    
-    // Apply theme color to CSS variables
     document.documentElement.style.setProperty('--theme-color', color);
+    
+    checkAdminStatus();
   }, []);
 
+  async function checkAdminStatus() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    setIsAdmin(!!roles);
+  }
+
   const navigationItems = [
-    { href: "/history", icon: "📜", title: "History", description: "View History" },
-    { href: "/chat", icon: "💬", title: "Chat With Me", description: "Conversation" },
+    { 
+      href: "/history", 
+      icon: MapPin, 
+      title: "Explore Maps", 
+      description: "Browse historical maps & atlases",
+      color: "from-amber-700 to-amber-900"
+    },
+    { 
+      href: "/chat", 
+      icon: MessageSquare, 
+      title: "History AI", 
+      description: "Ask questions about the past",
+      color: "from-stone-700 to-stone-900"
+    },
   ];
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <div 
-        className="fixed left-0 top-0 bottom-0 w-4 opacity-90 z-10 transition-colors duration-500"
-        style={{ backgroundColor: themeColor }}
-      />
+    <div className="min-h-screen" style={{ 
+      background: 'linear-gradient(135deg, hsl(var(--parchment)) 0%, hsl(var(--parchment-dark)) 100%)',
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Decorative border - antique frame effect */}
+      <div className="fixed inset-0 pointer-events-none border-8 border-double opacity-40 z-50" 
+           style={{ borderColor: 'hsl(var(--brass))' }} />
       
       {/* Header */}
-      <div 
-        className="w-full opacity-92 p-6 pl-12 text-foreground text-2xl font-bold ml-4 border-b border-border tracking-wide min-h-[60px] flex items-center justify-between"
-        style={{ backgroundColor: themeColor }}
-      >
-        <span>Historical Discoveries</span>
-        
-        {/* Settings Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setSettingsOpen(!settingsOpen)}
-            className="p-2 hover:bg-background/10 rounded-lg transition-colors"
-            title="Settings"
-          >
-            <span className="text-2xl">⚙️</span>
-          </button>
+      <div className="relative border-b-2 border-[hsl(var(--brass))] shadow-lg"
+           style={{ 
+             background: 'linear-gradient(to bottom, hsl(var(--leather)), hsl(var(--brass)/0.3))',
+             boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+           }}>
+        <div className="px-8 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--brass))] 
+                          flex items-center justify-center shadow-lg">
+              <MapPin className="w-6 h-6 text-[hsl(var(--leather))]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[hsl(var(--parchment))] tracking-wide" 
+                  style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+                Historical Discoveries
+              </h1>
+              <p className="text-sm text-[hsl(var(--parchment))]/70">Your Personal Archive</p>
+            </div>
+          </div>
           
-          {settingsOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setSettingsOpen(false)}
-              />
-              <div className="absolute right-0 top-full mt-2 bg-card border-2 border-border rounded-lg shadow-lg z-20 min-w-[160px]">
-                <Link
-                  to="/preferences"
-                  className="block px-4 py-3 text-foreground hover:bg-accent transition-colors first:rounded-t-lg"
-                  onClick={() => setSettingsOpen(false)}
-                >
-                  Preferences
-                </Link>
-                <Link
-                  to="/profile"
-                  className="block px-4 py-3 text-foreground hover:bg-accent transition-colors last:rounded-b-lg"
-                  onClick={() => setSettingsOpen(false)}
-                >
-                  Profile
-                </Link>
+          {/* Settings Dropdown */}
+          <div className="relative flex items-center gap-3">
+            {isAdmin && (
+              <div className="px-3 py-1 rounded-full bg-gradient-to-r from-[hsl(var(--gold))] to-yellow-600 
+                            border border-yellow-800 shadow-md">
+                <span className="text-xs font-bold text-[hsl(var(--leather))]">ADMIN</span>
               </div>
-            </>
-          )}
+            )}
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-6 h-6 text-[hsl(var(--parchment))]" />
+            </button>
+            
+            {settingsOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setSettingsOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 bg-[hsl(var(--card))] border-2 
+                              border-[hsl(var(--brass))] rounded-lg shadow-xl z-20 min-w-[180px]"
+                     style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+                  <Link
+                    to="/preferences"
+                    className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                             transition-colors first:rounded-t-lg flex items-center gap-2"
+                    onClick={() => setSettingsOpen(false)}
+                  >
+                    <Settings className="w-4 h-4" />
+                    Preferences
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                             transition-colors last:rounded-b-lg flex items-center gap-2"
+                    onClick={() => setSettingsOpen(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
       
-      {/* Main Content */}
-      <div className="ml-10 mt-10 p-10">
-        <div className="text-2xl text-foreground font-bold tracking-wide mb-6">
-          {username ? `Hi ${username}!` : "Hi!"}
+      {/* Main Content - Discovery Desk */}
+      <div className="px-8 py-12 max-w-6xl mx-auto">
+        {/* Welcome Section */}
+        <div className="mb-8 text-center">
+          <h2 className="text-4xl font-bold text-foreground mb-2" 
+              style={{ fontFamily: 'Georgia, serif' }}>
+            {username ? `Welcome back, ${username}!` : "Welcome, Explorer!"}
+          </h2>
+          <p className="text-lg text-muted-foreground italic">
+            Your Discovery Desk — Ready to explore the world's greatest timelines?
+          </p>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mb-8 p-6 bg-[hsl(var(--card))] rounded-lg border-2 border-[hsl(var(--border))] shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="w-5 h-5 text-[hsl(var(--brass))]" />
+            <h3 className="font-semibold text-foreground">Recent Activity</h3>
+          </div>
+          <p className="text-sm text-muted-foreground italic">
+            No activity yet — start your first journey!
+          </p>
         </div>
         
-        <div className="flex flex-wrap gap-6 mt-6">
+        {/* Navigation Cards - Explorer's Desk */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {navigationItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}
-              className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
-              title={item.description}
+              className="group relative overflow-hidden"
             >
-              <span className="text-4xl mb-2">{item.icon}</span>
-              <span className="text-lg">{item.title}</span>
+              <div className="relative p-8 bg-[hsl(var(--card))] border-2 border-[hsl(var(--border))] 
+                            rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 
+                            hover:scale-105 hover:border-[hsl(var(--gold))]"
+                   style={{ 
+                     background: 'linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--parchment-dark)) 100%)',
+                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                   }}>
+                {/* Icon with gradient background */}
+                <div className={`inline-flex p-4 rounded-full bg-gradient-to-br ${item.color} mb-4 
+                               shadow-lg group-hover:scale-110 transition-transform`}>
+                  <item.icon className="w-8 h-8 text-[hsl(var(--parchment))]" />
+                </div>
+                
+                <h3 className="text-2xl font-bold text-foreground mb-2" 
+                    style={{ fontFamily: 'Georgia, serif' }}>
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground">{item.description}</p>
+                
+                {/* Decorative corner */}
+                <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 
+                              border-[hsl(var(--brass))] opacity-40" />
+                <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 
+                              border-[hsl(var(--brass))] opacity-40" />
+              </div>
             </Link>
           ))}
-          
-          {/* Placeholder for future Tell Me feature */}
-          <div className="flex flex-col items-center bg-muted/50 border-2 border-dashed border-border rounded-xl p-6 min-w-[130px] min-h-[100px] text-muted-foreground font-semibold opacity-50 cursor-not-allowed" title="Coming Soon">
-            <span className="text-4xl mb-2">🗣️</span>
-            <span className="text-lg">Tell Me</span>
-            <span className="text-xs mt-1">(Coming Soon)</span>
-          </div>
+        </div>
+
+        {/* Coming Soon Card */}
+        <div className="mt-6 p-6 bg-[hsl(var(--muted))] border-2 border-dashed border-[hsl(var(--border))] 
+                      rounded-lg opacity-60 text-center">
+          <p className="text-lg font-semibold text-muted-foreground mb-1">More Features Coming Soon</p>
+          <p className="text-sm text-muted-foreground italic">Voice chronicles, timeline builder & more...</p>
         </div>
       </div>
     </div>
