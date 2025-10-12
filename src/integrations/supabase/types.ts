@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      base_maps: {
+        Row: {
+          attribution: string | null
+          created_at: string
+          file_path: string
+          id: string
+          license: string | null
+          region: string
+          source_url: string | null
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          attribution?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          license?: string | null
+          region: string
+          source_url?: string | null
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          attribution?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          license?: string | null
+          region?: string
+          source_url?: string | null
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       hotspots: {
         Row: {
           created_at: string
@@ -54,6 +90,44 @@ export type Database = {
             columns: ["poster_id"]
             isOneToOne: false
             referencedRelation: "posters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      overlays: {
+        Row: {
+          base_map_id: string
+          created_at: string
+          file_path: string
+          id: string
+          notes: string | null
+          theme: string
+          year: number
+        }
+        Insert: {
+          base_map_id: string
+          created_at?: string
+          file_path: string
+          id?: string
+          notes?: string | null
+          theme: string
+          year: number
+        }
+        Update: {
+          base_map_id?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          notes?: string | null
+          theme?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overlays_base_map_id_fkey"
+            columns: ["base_map_id"]
+            isOneToOne: false
+            referencedRelation: "base_maps"
             referencedColumns: ["id"]
           },
         ]
@@ -109,6 +183,27 @@ export type Database = {
           id?: string
           secondary_email?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      trusted_sources: {
+        Row: {
+          created_at: string
+          domain: string
+          id: number
+          label: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: number
+          label: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: number
+          label?: string
         }
         Relationships: []
       }

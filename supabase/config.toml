@@ -1,1 +1,7 @@
 project_id = "grtxyrucfjucmqebjavi"
+
+[functions.historian-qa]
+verify_jwt = false
+
+[functions.overlay-artist]
+verify_jwt = false
