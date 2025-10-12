@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, MessageSquare, User, Settings, Activity, LogIn, LogOut } from "lucide-react";
+import { MapPin, MessageSquare, User, Settings, Activity, LogIn, LogOut, Code2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { DevPanel } from "@/components/DevPanel";
 
 const Index = () => {
   const [username, setUsername] = useState<string>("");
@@ -10,6 +11,7 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [devPanelOpen, setDevPanelOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -167,20 +169,9 @@ const Index = () => {
                                  transition-colors flex items-center gap-2 border-t border-[hsl(var(--border))]"
                         onClick={() => setSettingsOpen(false)}
                       >
-                        <User className="w-4 h-4" />
+                       <User className="w-4 h-4" />
                         Profile
                       </Link>
-                      {isAdmin && (
-                        <Link
-                          to="/dev-tools"
-                          className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
-                                   transition-colors flex items-center gap-2 border-t border-[hsl(var(--border))]"
-                          onClick={() => setSettingsOpen(false)}
-                        >
-                          <Settings className="w-4 h-4" />
-                          Dev Tools
-                        </Link>
-                      )}
                       <button
                         onClick={() => {
                           setSettingsOpen(false);
@@ -269,6 +260,22 @@ const Index = () => {
           <p className="text-sm text-muted-foreground italic">Voice chronicles, timeline builder & more...</p>
         </div>
       </div>
+
+      {/* Dev Tools Toggle Button - Fixed Bottom Left */}
+      {isAdmin && session && (
+        <button
+          onClick={() => setDevPanelOpen(!devPanelOpen)}
+          className="fixed bottom-6 left-6 z-30 p-4 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--brass))] 
+                   shadow-2xl hover:scale-110 transition-all duration-200 border-2 border-[hsl(var(--leather))]
+                   hover:shadow-[0_0_30px_rgba(218,165,32,0.5)]"
+          title="Developer Tools"
+        >
+          <Code2 className="w-6 h-6 text-[hsl(var(--leather))]" />
+        </button>
+      )}
+
+      {/* Dev Panel */}
+      <DevPanel isOpen={devPanelOpen} onClose={() => setDevPanelOpen(false)} />
     </div>
   );
 };
