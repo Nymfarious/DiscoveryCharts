@@ -39,7 +39,18 @@ const ChatWithMe = () => {
 
       if (error) throw error;
 
-      setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+      const assistantMessage = data.answer;
+      setMessages(prev => [...prev, { role: "assistant", content: assistantMessage }]);
+
+      // Save to chat history
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('chat_history').insert({
+          user_id: user.id,
+          question: userMessage,
+          answer: assistantMessage
+        });
+      }
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -127,49 +138,46 @@ const ChatWithMe = () => {
     
     setIsSpeaking(true);
     const voiceProvider = localStorage.getItem("voiceProvider") || "browser";
+    const selectedVoiceId = localStorage.getItem("selectedVoiceId");
 
     try {
-      if (voiceProvider === "elevenlabs") {
-        const apiKey = localStorage.getItem("elevenLabsApiKey");
-        const voiceId = localStorage.getItem("selectedVoiceId") || "EXAVITQu4vr4xnSDxMaL";
-
-        if (!apiKey) {
-          throw new Error("ElevenLabs API key not set");
-        }
-
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'xi-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+      if (voiceProvider === "elevenlabs" && selectedVoiceId) {
+        // Use backend edge function for ElevenLabs
+        const { data, error } = await supabase.functions.invoke('text-to-speech', {
+          body: { 
             text,
-            model_id: "eleven_multilingual_v2",
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.5
-            }
-          })
+            voiceId: selectedVoiceId,
+            modelId: 'eleven_multilingual_v2'
+          }
         });
 
-        const audioBlob = await response.blob();
+        if (error) throw error;
+
+        const audioBlob = new Blob([data], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.onended = () => setIsSpeaking(false);
-        audio.play();
+        audio.onerror = () => setIsSpeaking(false);
+        await audio.play();
       } else {
+        // Default to browser voice (UK English)
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = window.speechSynthesis.getVoices();
-        const selectedVoice = localStorage.getItem("selectedBrowserVoice");
         
-        if (selectedVoice) {
-          const voice = voices.find(v => v.name === selectedVoice);
-          if (voice) utterance.voice = voice;
-        }
-
+        // Try to find UK English voice, fallback to any English voice
+        const ukVoice = voices.find(v => 
+          v.lang === 'en-GB' || 
+          v.name.includes('UK') || 
+          v.name.includes('British')
+        );
+        const anyEnglishVoice = voices.find(v => v.lang.startsWith('en'));
+        
+        utterance.voice = ukVoice || anyEnglishVoice || voices[0];
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
         utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        
         window.speechSynthesis.speak(utterance);
       }
     } catch (error) {
@@ -177,7 +185,7 @@ const ChatWithMe = () => {
       setIsSpeaking(false);
       toast({
         title: "Speech Error",
-        description: "Could not speak text",
+        description: "Could not speak text. Using default voice.",
         variant: "destructive",
       });
     }

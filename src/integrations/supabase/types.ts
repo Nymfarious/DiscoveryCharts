@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_history: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          question: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          question: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          question?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       hotspots: {
         Row: {
           created_at: string
