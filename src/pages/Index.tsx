@@ -23,11 +23,9 @@ const Index = () => {
   const navigationItems = [
     { href: "/history", icon: "📜", title: "History", description: "View History" },
     { href: "/chat", icon: "💬", title: "Chat With Me", description: "Conversation" },
-    { href: "/settings", icon: "⚙️", title: "Settings", description: "Settings & Configuration", submenu: [
-      { href: "/preferences", title: "Preferences" },
-      { href: "/profile", title: "Profile" }
-    ]},
   ];
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,10 +37,46 @@ const Index = () => {
       
       {/* Header */}
       <div 
-        className="w-full opacity-92 p-6 pl-12 text-foreground text-2xl font-bold ml-4 border-b border-border tracking-wide min-h-[60px] flex items-center"
+        className="w-full opacity-92 p-6 pl-12 text-foreground text-2xl font-bold ml-4 border-b border-border tracking-wide min-h-[60px] flex items-center justify-between"
         style={{ backgroundColor: themeColor }}
       >
-        Historical Discoveries
+        <span>Historical Discoveries</span>
+        
+        {/* Settings Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setSettingsOpen(!settingsOpen)}
+            className="p-2 hover:bg-background/10 rounded-lg transition-colors"
+            title="Settings"
+          >
+            <span className="text-2xl">⚙️</span>
+          </button>
+          
+          {settingsOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setSettingsOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 bg-card border-2 border-border rounded-lg shadow-lg z-20 min-w-[160px]">
+                <Link
+                  to="/preferences"
+                  className="block px-4 py-3 text-foreground hover:bg-accent transition-colors first:rounded-t-lg"
+                  onClick={() => setSettingsOpen(false)}
+                >
+                  Preferences
+                </Link>
+                <Link
+                  to="/profile"
+                  className="block px-4 py-3 text-foreground hover:bg-accent transition-colors last:rounded-b-lg"
+                  onClick={() => setSettingsOpen(false)}
+                >
+                  Profile
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
       </div>
       
       {/* Main Content */}
@@ -53,31 +87,15 @@ const Index = () => {
         
         <div className="flex flex-wrap gap-6 mt-6">
           {navigationItems.map((item) => (
-            <div key={item.href} className="relative group">
-              <Link
-                to={item.href}
-                className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
-                title={item.description}
-              >
-                <span className="text-4xl mb-2">{item.icon}</span>
-                <span className="text-lg">{item.title}</span>
-              </Link>
-              
-              {/* Settings submenu */}
-              {item.submenu && (
-                <div className="absolute left-0 top-full mt-2 bg-card border-2 border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 min-w-[160px]">
-                  {item.submenu.map((subItem) => (
-                    <Link
-                      key={subItem.href}
-                      to={subItem.href}
-                      className="block px-4 py-3 text-foreground hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg"
-                    >
-                      {subItem.title}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Link
+              key={item.href}
+              to={item.href}
+              className="flex flex-col items-center bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 min-w-[130px] min-h-[100px] text-foreground font-semibold hover:border-primary no-underline"
+              title={item.description}
+            >
+              <span className="text-4xl mb-2">{item.icon}</span>
+              <span className="text-lg">{item.title}</span>
+            </Link>
           ))}
           
           {/* Placeholder for future Tell Me feature */}
