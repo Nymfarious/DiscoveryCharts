@@ -16,6 +16,7 @@ import ChatHistory from "./pages/ChatHistory";
 import Ekko from "./pages/Ekko";
 import History from "./pages/History";
 import ViewPoster from "./pages/ViewPoster";
+import Workspace from "./pages/Workspace";
 import FamilyTree from "./pages/FamilyTree";
 import AdminIngest from "./pages/AdminIngest";
 import OverlayCreator from "./pages/OverlayCreator";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/tell-me" element={<TellMe />} />
           <Route path="/history" element={<LoginGate><History /></LoginGate>} />
           <Route path="/history/view" element={<LoginGate><ViewPoster /></LoginGate>} />
+          <Route path="/workspace" element={<LoginGate><Workspace /></LoginGate>} />
           <Route path="/admin/ingest" element={<LoginGate><AdminIngest /></LoginGate>} />
           <Route path="/overlay-creator" element={<LoginGate><OverlayCreator /></LoginGate>} />
           <Route path="/chat" element={<ChatWithMe />} />

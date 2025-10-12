@@ -1,0 +1,303 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { MapPin, LogOut, Home, Library } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Search, Loader2 } from "lucide-react";
+import PosterPicker from "@/components/PosterPicker";
+import HistoryViewer from "@/components/HistoryViewer";
+import { toast } from "sonner";
+
+type Hotspot = {
+  id: string;
+  title: string;
+  snippet: string | null;
+  x: number;
+  y: number;
+  zoom: number | null;
+  tags: string[] | null;
+};
+
+type Poster = {
+  id: string;
+  title: string;
+  credit: string | null;
+  license_status: string;
+  dzi_path: string;
+};
+
+const Workspace = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const posterId = searchParams.get('poster');
+  
+  const [query, setQuery] = useState("");
+  const [poster, setPoster] = useState<Poster | null>(null);
+  const [hotspots, setHotspots] = useState<Hotspot[]>([]);
+  const [dziUrl, setDziUrl] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(posterId ? "viewer" : "library");
+
+  useEffect(() => {
+    if (posterId && posterId !== poster?.id) {
+      loadPoster(posterId);
+      setActiveTab("viewer");
+    }
+  }, [posterId]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    navigate('/');
+  }
+
+  function handleOpenPoster(id: string) {
+    setSearchParams({ poster: id });
+  }
+
+  async function loadPoster(id: string) {
+    setLoading(true);
+    try {
+      const { data: posterData, error: posterError } = await supabase
+        .from('posters')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (posterError) throw posterError;
+      setPoster(posterData);
+
+      const { data: hotspotsData, error: hotspotsError } = await supabase
+        .from('hotspots')
+        .select('*')
+        .eq('poster_id', id);
+
+      if (hotspotsError) throw hotspotsError;
+      setHotspots(hotspotsData || []);
+
+      const { data: signedData, error: signedError } = await supabase.functions.invoke(
+        'getSignedTile',
+        { body: { path: posterData.dzi_path } }
+      );
+
+      if (signedError) throw signedError;
+      setDziUrl(signedData.url);
+    } catch (error: any) {
+      console.error('Error loading poster:', error);
+      toast.error(error.message || 'Failed to load poster');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filteredHotspots = hotspots.filter(h =>
+    query.trim() === "" || 
+    h.title.toLowerCase().includes(query.toLowerCase()) ||
+    (h.snippet && h.snippet.toLowerCase().includes(query.toLowerCase())) ||
+    (h.tags && h.tags.join(' ').toLowerCase().includes(query.toLowerCase()))
+  );
+
+  return (
+    <div className="min-h-screen" style={{ 
+      background: 'linear-gradient(135deg, hsl(var(--parchment)) 0%, hsl(var(--parchment-dark)) 100%)',
+      backgroundAttachment: 'fixed'
+    }}>
+      <div className="fixed inset-0 pointer-events-none border-8 border-double opacity-30 z-50" 
+           style={{ borderColor: 'hsl(var(--brass))' }} />
+      
+      {/* Header */}
+      <div className="relative border-b-2 border-[hsl(var(--brass))] shadow-lg"
+           style={{ 
+             background: 'linear-gradient(to bottom, hsl(var(--leather)), hsl(var(--brass)/0.3))',
+             boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+           }}>
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild size="sm"
+                    className="text-[hsl(var(--parchment))] hover:bg-white/10">
+              <Link to="/" className="flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
+            </Button>
+            <div className="flex items-center gap-3">
+              <MapPin className="w-6 h-6 text-[hsl(var(--gold))]" />
+              <span className="text-xl font-bold text-[hsl(var(--parchment))]" 
+                    style={{ fontFamily: 'Georgia, serif' }}>
+                Workspace
+              </span>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleSignOut}
+                  className="text-[hsl(var(--parchment))] hover:bg-white/10">
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="p-6 md:p-8 max-w-7xl mx-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))]">
+            <TabsTrigger value="library" className="flex items-center gap-2 data-[state=active]:bg-[hsl(var(--gold))] data-[state=active]:text-[hsl(var(--leather))]">
+              <Library className="w-4 h-4" />
+              Map Library
+            </TabsTrigger>
+            <TabsTrigger value="viewer" className="flex items-center gap-2 data-[state=active]:bg-[hsl(var(--gold))] data-[state=active]:text-[hsl(var(--leather))]">
+              <MapPin className="w-4 h-4" />
+              Map Viewer
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Library Tab */}
+          <TabsContent value="library">
+            <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))]">
+              <CardHeader className="border-b border-[hsl(var(--border))]">
+                <CardTitle className="flex items-center gap-2 text-2xl" style={{ fontFamily: 'Georgia, serif' }}>
+                  <Library className="w-6 h-6 text-[hsl(var(--brass))]" />
+                  Historical Map Collection
+                </CardTitle>
+                <CardDescription className="italic">
+                  Browse and explore your collection of historical maps and documents
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PosterPicker onOpen={handleOpenPoster} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Viewer Tab */}
+          <TabsContent value="viewer">
+            {loading ? (
+              <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))] p-12">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--brass))]" />
+                  <p className="text-muted-foreground">Loading map...</p>
+                </div>
+              </Card>
+            ) : !poster ? (
+              <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))] p-12">
+                <div className="text-center">
+                  <MapPin className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg text-muted-foreground mb-4">No map selected</p>
+                  <Button onClick={() => setActiveTab("library")} variant="brass">
+                    Browse Library
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+                {/* Main Viewer */}
+                <div className="space-y-4">
+                  <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))]">
+                    <CardHeader className="border-b border-[hsl(var(--border))]">
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-[hsl(var(--brass))]" />
+                        {poster.title}
+                      </CardTitle>
+                      {poster.credit && (
+                        <CardDescription>{poster.credit}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      {/* Search Bar */}
+                      <div className="flex items-center gap-3 mb-4 p-3 bg-[hsl(var(--muted))] rounded-lg">
+                        <Search className="w-5 h-5 text-muted-foreground" />
+                        <Input
+                          placeholder="Search locations..."
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          className="flex-1 border-none bg-transparent"
+                        />
+                        {query && (
+                          <Button variant="ghost" size="sm" onClick={() => setQuery('')}>
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Viewer */}
+                      {dziUrl && (
+                        <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))]">
+                          <HistoryViewer 
+                            dziUrl={dziUrl} 
+                            hotspots={filteredHotspots} 
+                            focus={filteredHotspots[0]} 
+                          />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Instructions */}
+                  <Card className="border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 p-4">
+                    <h3 className="font-semibold mb-2 text-sm">Navigation:</h3>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• <strong>Zoom:</strong> Mouse wheel or pinch gesture</li>
+                      <li>• <strong>Pan:</strong> Click and drag</li>
+                      <li>• <strong>Pins:</strong> Click red markers to jump to locations</li>
+                    </ul>
+                  </Card>
+                </div>
+
+                {/* Sidebar - Hotspots */}
+                <aside className="space-y-4">
+                  <Card className="border-2 border-[hsl(var(--brass))] bg-[hsl(var(--card))]">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <MapPin className="w-5 h-5" />
+                        Locations {query && `(${filteredHotspots.length})`}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+                        {filteredHotspots.length > 0 ? (
+                          filteredHotspots.map(h => (
+                            <div 
+                              key={h.id} 
+                              className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors cursor-pointer"
+                              onClick={() => {
+                                const ev = new CustomEvent('jump-to-hotspot', { detail: h });
+                                window.dispatchEvent(ev);
+                              }}
+                            >
+                              <div className="font-medium text-sm mb-1">{h.title}</div>
+                              {h.snippet && (
+                                <div className="text-xs text-muted-foreground line-clamp-2">
+                                  {h.snippet}
+                                </div>
+                              )}
+                              {h.tags && h.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {h.tags.map(tag => (
+                                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[hsl(var(--brass))]/20 text-[hsl(var(--brass))]">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            No locations marked on this map
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </aside>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Workspace;

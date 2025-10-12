@@ -54,7 +54,7 @@ const History = () => {
   }
 
   function handleOpenPoster(posterId: string) {
-    navigate(`/history/view?id=${posterId}`);
+    navigate(`/workspace?poster=${posterId}`);
   }
 
   async function handleLocalUpload() {
@@ -170,7 +170,7 @@ const History = () => {
                     className="text-[hsl(var(--parchment))] hover:bg-white/10">
               <Link to="/" className="flex items-center gap-2">
                 <Home className="w-4 h-4" />
-                Dashboard
+                Home
               </Link>
             </Button>
             <div className="flex items-center gap-3">
