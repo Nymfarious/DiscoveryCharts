@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { MapPin, MessageSquare, User, Settings, Activity } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MapPin, MessageSquare, User, Settings, Activity, LogIn, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [username, setUsername] = useState<string>("");
   const [themeColor, setThemeColor] = useState<string>("#d4eaf7");
   const [isAdmin, setIsAdmin] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const name = localStorage.getItem("username") || "";
@@ -17,12 +20,37 @@ const Index = () => {
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
     
-    checkAdminStatus();
+    // Check auth session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        checkAdminStatus();
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        if (session) {
+          setTimeout(() => {
+            checkAdminStatus();
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   async function checkAdminStatus() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
 
     const { data: roles } = await supabase
       .from('user_roles')
@@ -32,6 +60,13 @@ const Index = () => {
       .maybeSingle();
 
     setIsAdmin(!!roles);
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setSession(null);
+    setIsAdmin(false);
+    navigate('/auth');
   }
 
   const navigationItems = [
@@ -83,48 +118,72 @@ const Index = () => {
           
           {/* Settings Dropdown */}
           <div className="relative flex items-center gap-3">
-            {isAdmin && (
-              <div className="px-3 py-1 rounded-full bg-gradient-to-r from-[hsl(var(--gold))] to-yellow-600 
-                            border border-yellow-800 shadow-md">
-                <span className="text-xs font-bold text-[hsl(var(--leather))]">ADMIN</span>
-              </div>
-            )}
-            <button
-              onClick={() => setSettingsOpen(!settingsOpen)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-6 h-6 text-[hsl(var(--parchment))]" />
-            </button>
-            
-            {settingsOpen && (
+            {!session ? (
+              <Button
+                variant="brass"
+                size="sm"
+                onClick={() => navigate('/auth')}
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            ) : (
               <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setSettingsOpen(false)}
-                />
-                <div className="absolute right-0 top-full mt-2 bg-[hsl(var(--card))] border-2 
-                              border-[hsl(var(--brass))] rounded-lg shadow-xl z-20 min-w-[180px]"
-                     style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-                  <Link
-                    to="/preferences"
-                    className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
-                             transition-colors first:rounded-t-lg flex items-center gap-2"
-                    onClick={() => setSettingsOpen(false)}
-                  >
-                    <Settings className="w-4 h-4" />
-                    Preferences
-                  </Link>
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
-                             transition-colors last:rounded-b-lg flex items-center gap-2"
-                    onClick={() => setSettingsOpen(false)}
-                  >
-                    <User className="w-4 h-4" />
-                    Profile
-                  </Link>
-                </div>
+                {isAdmin && (
+                  <div className="px-3 py-1 rounded-full bg-gradient-to-r from-[hsl(var(--gold))] to-yellow-600 
+                                border border-yellow-800 shadow-md">
+                    <span className="text-xs font-bold text-[hsl(var(--leather))]">ADMIN</span>
+                  </div>
+                )}
+                <button
+                  onClick={() => setSettingsOpen(!settingsOpen)}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  title="Settings"
+                >
+                  <Settings className="w-6 h-6 text-[hsl(var(--parchment))]" />
+                </button>
+                
+                {settingsOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setSettingsOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-2 bg-[hsl(var(--card))] border-2 
+                                  border-[hsl(var(--brass))] rounded-lg shadow-xl z-20 min-w-[180px]"
+                         style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+                      <Link
+                        to="/preferences"
+                        className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                                 transition-colors first:rounded-t-lg flex items-center gap-2"
+                        onClick={() => setSettingsOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Preferences
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                                 transition-colors flex items-center gap-2 border-t border-[hsl(var(--border))]"
+                        onClick={() => setSettingsOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          handleSignOut();
+                        }}
+                        className="w-full text-left px-4 py-3 text-foreground hover:bg-[hsl(var(--accent))] 
+                                 transition-colors last:rounded-b-lg flex items-center gap-2 border-t border-[hsl(var(--border))]"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

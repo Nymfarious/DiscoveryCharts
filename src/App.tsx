@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginGate from "./components/LoginGate";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import TellMe from "./pages/TellMe";
 import ProveIt from "./pages/ProveIt";
 import Profile from "./pages/Profile";
@@ -28,8 +29,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/preferences" element={<Preferences />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<LoginGate><Profile /></LoginGate>} />
+          <Route path="/preferences" element={<LoginGate><Preferences /></LoginGate>} />
           <Route path="/make-it" element={<MakeIt />} />
           <Route path="/tell-me" element={<TellMe />} />
           <Route path="/history" element={<LoginGate><History /></LoginGate>} />

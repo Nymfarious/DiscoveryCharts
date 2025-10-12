@@ -25,14 +25,26 @@ const Profile = () => {
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
     
-    // Load user email from Supabase
-    const loadUserEmail = async () => {
+    // Load user email and admin status from Supabase
+    const loadUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         setUserEmail(user.email);
       }
+      
+      // Check admin status
+      if (user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        setIsAdmin(!!roles);
+      }
     };
-    loadUserEmail();
+    loadUserData();
   }, []);
 
   const saveProfile = async () => {
