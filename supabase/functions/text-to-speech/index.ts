@@ -11,13 +11,15 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voiceId, modelId = 'eleven_multilingual_v2' } = await req.json();
-    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+    const { text, voiceId, modelId = 'eleven_multilingual_v2', apiKey: clientApiKey } = await req.json();
+    
+    // Use client-provided API key if available, otherwise fall back to backend secret
+    const apiKey = clientApiKey || Deno.env.get('ELEVENLABS_API_KEY');
 
-    if (!ELEVENLABS_API_KEY) {
+    if (!apiKey) {
       console.error('ELEVENLABS_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'ElevenLabs API key not configured' }),
+        JSON.stringify({ error: 'ElevenLabs API key not configured (provide via localStorage or backend secret)' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -29,14 +31,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Converting text to speech with voice ${voiceId}`);
+    console.log(`Converting text to speech with voice ${voiceId} using ${clientApiKey ? 'client' : 'backend'} API key`);
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
         'Accept': 'audio/mpeg',
         'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY,
+        'xi-api-key': apiKey,
       },
       body: JSON.stringify({
         text,

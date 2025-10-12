@@ -206,7 +206,8 @@ const Preferences = () => {
           body: { 
             text: testText,
             voiceId: selectedVoiceId,
-            modelId: 'eleven_multilingual_v2'
+            modelId: 'eleven_multilingual_v2',
+            apiKey: elevenLabsApiKey || undefined // Send localStorage key if present
           }
         });
 
@@ -387,11 +388,11 @@ const Preferences = () => {
                 className="mt-1"
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Get your API key from{" "}
+                Optional: Get your API key from{" "}
                 <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-primary underline">
                   ElevenLabs
                 </a>{" "}
-                (Free tier: 10,000 characters per month)
+                (Free tier: 10,000 characters per month). If not provided, backend secret will be used.
               </p>
             </div>
           )}
