@@ -19,6 +19,11 @@ const ELEVENLABS_VOICES = [
 // Theme presets with light, medium, and dark variants
 const THEME_PRESETS = [
   {
+    name: "Vintage Cartographer",
+    colors: { light: "#f5e6d3", medium: "#8b7355", dark: "#5c4a3a" },
+    description: "Aged parchment and explorer's desk"
+  },
+  {
     name: "Blue",
     colors: { light: "#e3f2fd", medium: "#2196f3", dark: "#1565c0" }
   },
@@ -310,8 +315,16 @@ const Preferences = () => {
             <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
               {THEME_PRESETS.map((theme) => (
                 <div key={theme.name} className="space-y-2">
-                  <h4 className="text-sm font-medium text-center">{theme.name}</h4>
-                  <div className="flex gap-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <h4 className="text-sm font-medium text-center">{theme.name}</h4>
+                    {theme.name === "Vintage Cartographer" && <span className="text-lg">🗺️</span>}
+                  </div>
+                  {'description' in theme && (
+                    <p className="text-xs text-muted-foreground text-center italic">
+                      {theme.description}
+                    </p>
+                  )}
+                  <div className="flex gap-1 justify-center">
                     <button
                       onClick={() => handleThemeChange(theme.colors.light)}
                       className="w-8 h-8 rounded border border-border hover:scale-110 transition-transform"

@@ -208,31 +208,41 @@ const ChatWithMe = () => {
             ← Dashboard
           </Link>
         </Button>
-        <span className="text-4xl">💬</span>
-        Chat With Me
+        <span className="text-4xl">🗺️</span>
+        The Cartographer's Study
       </div>
       
       {/* Main Content */}
       <div className="ml-10 mt-9 p-8 max-w-4xl">
         {/* Messages Display */}
-        <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-4 min-h-[400px] max-h-[500px] overflow-y-auto">
+        <div className="bg-card/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-primary/20 p-6 mb-4 min-h-[400px] max-h-[500px] overflow-y-auto" 
+             style={{ 
+               backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0))',
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.1)'
+             }}>
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              Ask the historian a question about history...
+            <div className="text-center text-muted-foreground py-8 space-y-2">
+              <div className="text-6xl mb-4">📜</div>
+              <p className="text-lg font-serif italic">Consult the historian's archives...</p>
+              <p className="text-sm">Ask about maps, territories, and the passage of time</p>
             </div>
           ) : (
             <div className="space-y-4">
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-lg ${
+                  className={`p-4 rounded-lg border ${
                     msg.role === "user"
-                      ? "bg-primary/10 ml-8"
-                      : "bg-muted mr-8"
+                      ? "bg-primary/10 border-primary/30 ml-8 shadow-md"
+                      : "bg-card/90 border-border/50 mr-8 shadow-md backdrop-blur-sm"
                   }`}
+                  style={msg.role === "assistant" ? {
+                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0))',
+                  } : undefined}
                 >
                   <div className="flex justify-between items-start gap-2">
-                    <div className="whitespace-pre-wrap text-foreground flex-1">
+                    <div className="whitespace-pre-wrap text-foreground flex-1 font-serif leading-relaxed">
+                      {msg.role === "assistant" && <span className="text-primary font-bold">📖 </span>}
                       {msg.content}
                     </div>
                     {msg.role === "assistant" && (
@@ -259,10 +269,15 @@ const ChatWithMe = () => {
         </div>
 
         {/* Input Area */}
-        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+        <div className="bg-card/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-primary/20 p-6"
+             style={{ 
+               backgroundImage: 'linear-gradient(to top, rgba(255,255,255,0.05), rgba(255,255,255,0))',
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.1)'
+             }}>
           <div className="space-y-4">
-            <Label htmlFor="prompt" className="font-semibold">
-              Ask your question:
+            <Label htmlFor="prompt" className="font-semibold font-serif text-lg flex items-center gap-2">
+              <span>🖋️</span>
+              Inscribe your query:
             </Label>
             <div className="flex gap-2">
               <Textarea

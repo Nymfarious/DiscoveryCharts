@@ -14,6 +14,45 @@ serve(async (req) => {
   try {
     const { region, baseYear, compareYears, question } = await req.json();
     console.log('Historian Q&A request:', { region, baseYear, compareYears, question });
+    
+    // Handle simple question-only mode for chat interface
+    if (question && !region && !baseYear) {
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      if (!LOVABLE_API_KEY) {
+        throw new Error('LOVABLE_API_KEY not configured');
+      }
+
+      const simpleSystemPrompt = `You are a knowledgeable historian specializing in geography, cartography, and historical events. Answer questions with accuracy and provide interesting context about maps, territories, and historical changes.`;
+
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: simpleSystemPrompt },
+            { role: 'user', content: question }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI gateway error:', response.status, errorText);
+        throw new Error(`AI gateway error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const answer = data.choices[0].message.content;
+
+      return new Response(JSON.stringify({ answer }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get Lovable API key
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -36,7 +75,7 @@ serve(async (req) => {
       throw sourcesError;
     }
 
-    const trustedDomains = trustedSources.map(s => `${s.label} (${s.domain})`).join(', ');
+    const trustedDomains = trustedSources?.map(s => `${s.label} (${s.domain})`).join(', ') || 'wikipedia.org, loc.gov';
 
     // Build system prompt for Historian Q&A agent
     const systemPrompt = `You are the Historian Q&A Agent. Your role is to provide accurate historical information about maps and geographical changes.
@@ -57,7 +96,7 @@ Return your response as JSON with these keys:
 }`;
 
     const userPrompt = `Base map: ${region} in ${baseYear}
-Compare years: ${compareYears.join(', ')}
+Compare years: ${compareYears?.join(', ') || 'N/A'}
 Question: ${question}
 
 Provide 3-5 key changes with geometry hints for overlay creation.`;
