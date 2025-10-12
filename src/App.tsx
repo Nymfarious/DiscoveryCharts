@@ -17,6 +17,7 @@ import History from "./pages/History";
 import ViewPoster from "./pages/ViewPoster";
 import FamilyTree from "./pages/FamilyTree";
 import AdminIngest from "./pages/AdminIngest";
+import OverlayCreator from "./pages/OverlayCreator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/history" element={<LoginGate><History /></LoginGate>} />
           <Route path="/history/view" element={<LoginGate><ViewPoster /></LoginGate>} />
           <Route path="/admin/ingest" element={<LoginGate><AdminIngest /></LoginGate>} />
+          <Route path="/overlay-creator" element={<LoginGate><OverlayCreator /></LoginGate>} />
           <Route path="/chat" element={<ChatWithMe />} />
           <Route path="/prove-it" element={<ProveIt />} />
           <Route path="/ekko" element={<Ekko />} />
