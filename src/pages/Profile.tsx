@@ -177,17 +177,17 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 pt-4">
-          <Button onClick={saveProfile} 
-                  className="bg-gradient-to-r from-[hsl(var(--brass))] to-[hsl(var(--leather))] 
-                           hover:from-[hsl(var(--gold))] hover:to-[hsl(var(--brass))] text-[hsl(var(--parchment))]">
-            💾 Save Profile
-          </Button>
-          <Button onClick={resetProfile} variant="outline" 
-                  className="border-[hsl(var(--destructive))] text-destructive hover:bg-destructive/10">
-            🔄 Reset Profile
-          </Button>
-        </div>
+         <div className="flex gap-4 pt-4">
+           <Button onClick={saveProfile} 
+                   variant="brass"
+                   size="lg">
+             Save Profile
+           </Button>
+           <Button onClick={resetProfile} variant="destructive" 
+                   size="lg">
+             Reset Profile
+           </Button>
+         </div>
         </div>
       </div>
     </div>

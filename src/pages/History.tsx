@@ -296,14 +296,13 @@ const History = () => {
                     )}
                   </div>
 
-                  <Button
+                   <Button
                     onClick={handleLocalUpload}
                     disabled={uploadLoading || !file || !title.trim()}
-                    className="w-full bg-gradient-to-r from-[hsl(var(--brass))] to-[hsl(var(--leather))] 
-                             hover:from-[hsl(var(--gold))] hover:to-[hsl(var(--brass))] text-[hsl(var(--parchment))]"
+                    variant="brass"
                     size="lg"
                   >
-                    {uploadLoading ? 'Uploading...' : '📤 Upload Map to Archive'}
+                    {uploadLoading ? 'Uploading...' : 'Upload Map to Archive'}
                   </Button>
                 </CardContent>
               </Card>
@@ -375,14 +374,13 @@ const History = () => {
                     </Select>
                   </div>
 
-                  <Button
+                   <Button
                     onClick={handleCloudDownload}
                     disabled={cloudLoading || !cloudUrl.trim() || !cloudTitle.trim()}
-                    className="w-full bg-gradient-to-r from-[hsl(var(--brass))] to-[hsl(var(--leather))] 
-                             hover:from-[hsl(var(--gold))] hover:to-[hsl(var(--brass))] text-[hsl(var(--parchment))]"
+                    variant="steel"
                     size="lg"
                   >
-                    {cloudLoading ? 'Downloading...' : '☁️ Download & Import'}
+                    {cloudLoading ? 'Downloading...' : 'Download & Import'}
                   </Button>
 
                   <div className="bg-[hsl(var(--muted))] rounded-lg p-4 text-sm space-y-2 border border-[hsl(var(--border))]">
