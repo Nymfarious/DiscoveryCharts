@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { Eye, EyeOff, Lock, Unlock, GripVertical, Download, Save } from "lucide-react";
+import { Eye, EyeOff, Lock, Unlock, GripVertical, Download, Save, FileText, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ExportLayers from "@/components/ExportLayers";
 
 type Layer = {
   id: string;
@@ -40,6 +42,9 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
   const [baseMap, setBaseMap] = useState<BaseMap | null>(null);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [yearRange, setYearRange] = useState<[number, number]>([0, 3000]);
+  const [selectedTheme, setSelectedTheme] = useState<string>("all");
+  const [availableThemes, setAvailableThemes] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -100,6 +105,17 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
       );
 
       setLayers(layersWithUrls);
+
+      // Calculate year range and themes
+      if (layersWithUrls.length > 0) {
+        const years = layersWithUrls.map(l => l.year);
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years);
+        setYearRange([minYear, maxYear]);
+
+        const themes = [...new Set(layersWithUrls.map(l => l.theme))];
+        setAvailableThemes(themes);
+      }
     } catch (error: any) {
       console.error('Error loading layers:', error);
       toast.error(error.message || 'Failed to load layers');
@@ -135,9 +151,9 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
 
     ctx.drawImage(baseImg, 0, 0, width, height);
 
-    // Draw visible layers in z-index order
+    // Draw visible layers in z-index order, filtered by year and theme
     const visibleLayers = layers
-      .filter(l => l.visible)
+      .filter(l => l.visible && isLayerInRange(l))
       .sort((a, b) => a.z_index - b.z_index);
 
     for (const layer of visibleLayers) {
@@ -178,6 +194,16 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
     setLayers(prev =>
       prev.map(l => l.id === id ? { ...l, opacity } : l)
     );
+  }
+
+  function isLayerInRange(layer: Layer): boolean {
+    const [minYear, maxYear] = yearRange;
+    const themeMatch = selectedTheme === "all" || layer.theme === selectedTheme;
+    return layer.year >= minYear && layer.year <= maxYear && themeMatch;
+  }
+
+  function handleTimeSliderChange(value: number[]) {
+    setYearRange([value[0], value[1]]);
   }
 
   async function handleDragEnd(result: DropResult) {
@@ -258,7 +284,8 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
       {/* Layer Controls */}
       <Card className="border-2 border-[hsl(var(--brass))] bg-[hsl(var(--card))]">
         <CardHeader className="border-b border-[hsl(var(--border))]">
@@ -275,30 +302,73 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+          {/* Time Slider */}
+          {layers.length > 0 && (
+            <div className="mb-4 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-4 h-4 text-[hsl(var(--brass))]" />
+                <span className="text-sm font-medium">Timeline Filter</span>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-2 block">Theme</label>
+                  <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All themes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All themes</SelectItem>
+                      {availableThemes.map(theme => (
+                        <SelectItem key={theme} value={theme}>{theme}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-2 block">
+                    Year Range: {yearRange[0]} - {yearRange[1]}
+                  </label>
+                  <Slider
+                    value={yearRange}
+                    onValueChange={handleTimeSliderChange}
+                    min={Math.min(...layers.map(l => l.year))}
+                    max={Math.max(...layers.map(l => l.year))}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1 max-h-[calc(100vh-500px)] overflow-y-auto">
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="layers">
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef}>
-                    {layers.map((layer, index) => (
-                      <Draggable
-                        key={layer.id}
-                        draggableId={layer.id}
-                        index={index}
-                        isDragDisabled={layer.locked}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`flex flex-col gap-2 p-3 rounded-lg border bg-[hsl(var(--card))] mb-2 ${
-                              snapshot.isDragging ? 'shadow-lg' : ''
-                            }`}
-                            style={{
-                              ...provided.draggableProps.style,
-                              borderColor: layer.visible ? 'hsl(var(--brass))' : 'hsl(var(--border))',
-                            }}
-                          >
+                    {layers.map((layer, index) => {
+                      const inRange = isLayerInRange(layer);
+                      return (
+                        <Draggable
+                          key={layer.id}
+                          draggableId={layer.id}
+                          index={index}
+                          isDragDisabled={layer.locked}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className={`flex flex-col gap-2 p-3 rounded-lg border bg-[hsl(var(--card))] mb-2 ${
+                                snapshot.isDragging ? 'shadow-lg' : ''
+                              } ${!inRange ? 'opacity-40' : ''}`}
+                              style={{
+                                ...provided.draggableProps.style,
+                                borderColor: layer.visible && inRange ? 'hsl(var(--brass))' : 'hsl(var(--border))',
+                              }}
+                            >
                             <div className="flex items-center gap-2">
                               <div {...provided.dragHandleProps}>
                                 <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
@@ -346,10 +416,11 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
                                 disabled={layer.locked}
                               />
                             </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
                     {provided.placeholder}
                   </div>
                 )}
@@ -383,5 +454,12 @@ export default function LayerLab({ baseMapId }: LayerLabProps) {
         </CardContent>
       </Card>
     </div>
+
+    {/* Export Section */}
+    <ExportLayers 
+      baseMap={baseMap ? { title: baseMap.title, url: baseMap.url } : null} 
+      layers={layers} 
+    />
+  </div>
   );
 }

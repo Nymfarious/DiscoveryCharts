@@ -15,6 +15,7 @@ import AssetGallery from "@/components/AssetGallery";
 import HDAdmin from "@/pages/HDAdmin";
 import LayerLab from "@/components/LayerLab";
 import TextRemovalTool from "@/components/TextRemovalTool";
+import ExportLayers from "@/components/ExportLayers";
 import { toast } from "sonner";
 
 type Hotspot = {
@@ -465,34 +466,36 @@ const Workspace = () => {
                 </div>
               </Card>
             ) : (
-              <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))]">
-                <CardContent className="pt-6">
-                  <Tabs defaultValue="manage" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="manage">Manage Layers</TabsTrigger>
-                      <TabsTrigger value="clean">Clean Base</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="manage">
-                      <LayerLab baseMapId={poster.id} />
-                    </TabsContent>
-                    
-                    <TabsContent value="clean">
-                      {dziUrl && (
-                        <TextRemovalTool 
-                          baseMapId={poster.id}
-                          imageUrl={dziUrl}
-                          title={poster.title}
-                          onSaved={(cleanMapId) => {
-                            toast.success('Clean base map created! Loading...');
-                            loadPoster(cleanMapId);
-                          }}
-                        />
-                      )}
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))]">
+                  <CardContent className="pt-6">
+                    <Tabs defaultValue="manage" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="manage">Manage Layers</TabsTrigger>
+                        <TabsTrigger value="clean">Clean Base</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="manage">
+                        <LayerLab baseMapId={poster.id} />
+                      </TabsContent>
+                      
+                      <TabsContent value="clean">
+                        {dziUrl && (
+                          <TextRemovalTool 
+                            baseMapId={poster.id}
+                            imageUrl={dziUrl}
+                            title={poster.title}
+                            onSaved={(cleanMapId) => {
+                              toast.success('Clean base map created! Loading...');
+                              loadPoster(cleanMapId);
+                            }}
+                          />
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </TabsContent>
 
