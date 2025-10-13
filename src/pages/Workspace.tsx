@@ -10,6 +10,8 @@ import { Search, Loader2 } from "lucide-react";
 import PosterPicker from "@/components/PosterPicker";
 import HistoryViewer from "@/components/HistoryViewer";
 import ImageEditor from "@/components/ImageEditor";
+import ImageUploader from "@/components/ImageUploader";
+import AssetGallery from "@/components/AssetGallery";
 import HDAdmin from "@/pages/HDAdmin";
 import { toast } from "sonner";
 
@@ -43,6 +45,7 @@ const Workspace = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(posterId ? "viewer" : "library");
   const [isImageEditor, setIsImageEditor] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   useEffect(() => {
     if (posterId && posterId !== poster?.id) {
@@ -58,6 +61,45 @@ const Workspace = () => {
 
   function handleOpenPoster(id: string) {
     setSearchParams({ poster: id });
+  }
+
+  async function handleSelectAsset(id: string) {
+    setSelectedAssetId(id);
+    setActiveTab("imageview");
+    await loadAsset(id);
+  }
+
+  async function loadAsset(id: string) {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('map_assets')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error || !data) throw new Error('Asset not found');
+
+      const { data: publicUrlData } = supabase.storage
+        .from('tiles')
+        .getPublicUrl(data.file_path);
+
+      setPoster({
+        id: data.id,
+        title: data.title,
+        credit: data.description,
+        license_status: 'open',
+        dzi_path: data.file_path
+      });
+      setDziUrl(publicUrlData.publicUrl);
+      setHotspots([]);
+      setIsImageEditor(true);
+    } catch (error: any) {
+      console.error('Error loading asset:', error);
+      toast.error(error.message || 'Failed to load image');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadPoster(id: string) {
@@ -234,17 +276,32 @@ const Workspace = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <Tabs defaultValue="browse" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsList className="grid w-full grid-cols-3 mb-4">
                     <TabsTrigger value="browse">Browse Collection</TabsTrigger>
                     <TabsTrigger value="upload">Upload Maps</TabsTrigger>
+                    <TabsTrigger value="images">Upload Images</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="browse">
-                    <PosterPicker onOpen={handleOpenPoster} />
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Maps & Documents</h3>
+                        <PosterPicker onOpen={handleOpenPoster} />
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Map Assets & Images</h3>
+                        <AssetGallery onSelect={handleSelectAsset} />
+                      </div>
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="upload">
                     <HDAdmin />
+                  </TabsContent>
+                  
+                  <TabsContent value="images">
+                    <ImageUploader />
                   </TabsContent>
                 </Tabs>
               </CardContent>
