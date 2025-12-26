@@ -20,7 +20,11 @@ import Workspace from "./pages/Workspace";
 import FamilyTree from "./pages/FamilyTree";
 import AdminIngest from "./pages/AdminIngest";
 import OverlayCreator from "./pages/OverlayCreator";
+import GISViewer from "./pages/GISViewer";
 import NotFound from "./pages/NotFound";
+
+// Get basename for GitHub Pages deployment
+const basename = import.meta.env.BASE_URL || '/';
 
 const queryClient = new QueryClient();
 
@@ -29,7 +33,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -42,6 +46,7 @@ const App = () => (
           <Route path="/workspace" element={<LoginGate><Workspace /></LoginGate>} />
           <Route path="/admin/ingest" element={<LoginGate><AdminIngest /></LoginGate>} />
           <Route path="/overlay-creator" element={<LoginGate><OverlayCreator /></LoginGate>} />
+          <Route path="/gis" element={<GISViewer />} />
           <Route path="/chat" element={<ChatWithMe />} />
           <Route path="/chat-history" element={<LoginGate><ChatHistory /></LoginGate>} />
           <Route path="/prove-it" element={<ProveIt />} />
