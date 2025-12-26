@@ -16,6 +16,7 @@ import HDAdmin from "@/pages/HDAdmin";
 import LayerLab from "@/components/LayerLab";
 import TextRemovalTool from "@/components/TextRemovalTool";
 import ExportLayers from "@/components/ExportLayers";
+import RegistrationEditor from "@/components/RegistrationEditor";
 import { toast } from "sonner";
 
 type Hotspot = {
@@ -468,15 +469,39 @@ const Workspace = () => {
             ) : (
               <div className="space-y-4">
                 <Card className="border-2 border-[hsl(var(--brass))] shadow-xl bg-[hsl(var(--card))]">
-                  <CardContent className="pt-6">
+                <CardContent className="pt-6">
                     <Tabs defaultValue="manage" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsList className="grid w-full grid-cols-4 mb-4">
                         <TabsTrigger value="manage">Manage Layers</TabsTrigger>
+                        <TabsTrigger value="registration">Registration</TabsTrigger>
+                        <TabsTrigger value="create">Create Overlay</TabsTrigger>
                         <TabsTrigger value="clean">Clean Base</TabsTrigger>
                       </TabsList>
                       
                       <TabsContent value="manage">
                         <LayerLab baseMapId={poster.id} />
+                      </TabsContent>
+                      
+                      <TabsContent value="registration">
+                        {dziUrl && (
+                          <RegistrationEditor 
+                            baseMapId={poster.id}
+                            imageUrl={dziUrl}
+                            onSave={() => toast.success('Registration marks saved')}
+                          />
+                        )}
+                      </TabsContent>
+                      
+                      <TabsContent value="create">
+                        <div className="p-8 text-center space-y-4">
+                          <p className="text-muted-foreground">Create vector overlays with drawing tools</p>
+                          <Button 
+                            variant="brass" 
+                            onClick={() => navigate(`/overlay-creator?baseMapId=${poster.id}`)}
+                          >
+                            Open Overlay Creator
+                          </Button>
+                        </div>
                       </TabsContent>
                       
                       <TabsContent value="clean">
