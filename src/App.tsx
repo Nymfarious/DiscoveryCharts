@@ -23,9 +23,6 @@ import OverlayCreator from "./pages/OverlayCreator";
 import GISViewer from "./pages/GISViewer";
 import NotFound from "./pages/NotFound";
 
-// Get basename for GitHub Pages deployment
-const basename = import.meta.env.BASE_URL || '/';
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -33,7 +30,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename={basename}>
+      <BrowserRouter basename="/DiscoveryCharts">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
