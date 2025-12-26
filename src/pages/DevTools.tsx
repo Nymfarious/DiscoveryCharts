@@ -136,23 +136,21 @@ const DevTools = () => {
                 </div>
               </div>
 
-              {/* In Progress Features */}
+              {/* Completed - Registration marks */}
               <div className="flex items-start gap-3">
-                <Circle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
                   <span className="font-medium">Registration marks system</span>
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">In Progress</Badge>
+                  <p className="text-sm text-muted-foreground">3-point alignment anchors, visual marks on canvas, display toggle in Layer Lab</p>
                 </div>
-                <p className="text-sm text-muted-foreground w-full">3-point alignment anchors, visual marks, validation tools</p>
               </div>
               
               <div className="flex items-start gap-3">
-                <Circle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
                   <span className="font-medium">Overlay authoring tools</span>
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">In Progress</Badge>
+                  <p className="text-sm text-muted-foreground">Vector drawing (line, rect, circle, text, arrow), SVG source saved, PNG export</p>
                 </div>
-                <p className="text-sm text-muted-foreground w-full">Vector drawing (line, rect, circle, text, arrow), SVG export, PNG export</p>
               </div>
 
               {/* Coming Soon Features */}
