@@ -72,8 +72,13 @@ const ViewPoster = () => {
         { body: { path: posterData.dzi_path } }
       );
 
-      if (signedError) throw signedError;
-      setDziUrl(signedData.url);
+      if (signedError || signedData?.error || !signedData?.url) {
+        console.warn('DZI not found:', signedData?.error || signedError);
+        setDziUrl('');
+        toast.error('Map tiles not available for this poster. The file may not have been uploaded yet.');
+      } else {
+        setDziUrl(signedData.url);
+      }
     } catch (error: any) {
       console.error('Error loading poster:', error);
       toast.error(error.message || 'Failed to load poster');
@@ -172,13 +177,17 @@ const ViewPoster = () => {
           </Card>
 
           {/* Viewer */}
-          {dziUrl && (
+          {dziUrl ? (
             <Card className="p-3">
               <HistoryViewer 
                 dziUrl={dziUrl} 
                 hotspots={results} 
                 focus={results[0]} 
               />
+            </Card>
+          ) : (
+            <Card className="p-8 text-center bg-muted/50">
+              <p className="text-sm text-muted-foreground">Map tiles not available for this poster.</p>
             </Card>
           )}
 
