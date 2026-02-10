@@ -23,8 +23,7 @@ const ChatWithMe = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
+  function handleSignOut() {
     navigate('/');
   }
 
