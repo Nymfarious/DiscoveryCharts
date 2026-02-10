@@ -16,7 +16,7 @@ const Profile = () => {
   const [cityState, setCityState] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [secondaryEmail, setSecondaryEmail] = useState<string>("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = true; // Auth stubbed
   const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   useEffect(() => {
