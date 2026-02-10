@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Eye, Users, UserPlus } from "lucide-react";
+import { Plus, Eye, Users, UserPlus, ArrowLeft, TreePine } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import TreeVisualization, { type Person } from "@/components/familytree/TreeVisualization";
 import FriendCardForm, { type FriendCard } from "@/components/familytree/FriendCardForm";
@@ -12,7 +12,6 @@ import FamilyCardForm, { type FamilyCard } from "@/components/familytree/FamilyC
 import CardsViewer from "@/components/familytree/CardsViewer";
 
 const FamilyTree = () => {
-  const [themeColor, setThemeColor] = useState("#d4eaf7");
   const [gedData, setGedData] = useState<Person[]>([]);
   const [maxGenerations, setMaxGenerations] = useState(5);
   const [friendCards, setFriendCards] = useState<FriendCard[]>([]);
@@ -22,12 +21,6 @@ const FamilyTree = () => {
   const [addType, setAddType] = useState<'family' | 'friend'>('family');
   const [newFriend, setNewFriend] = useState<Partial<FriendCard>>({});
   const [newFamily, setNewFamily] = useState<Partial<FamilyCard>>({});
-
-  useEffect(() => {
-    const color = localStorage.getItem("favcolor") || "#d4eaf7";
-    setThemeColor(color);
-    document.documentElement.style.setProperty('--theme-color', color);
-  }, []);
 
   const parseGedcom = (content: string): Person[] => {
     const lines = content.split('\n');
@@ -66,61 +59,110 @@ const FamilyTree = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed left-0 top-0 bottom-0 w-4 opacity-90 z-10" style={{ backgroundColor: themeColor }} />
-      <div className="w-full opacity-92 p-4 pl-12 text-foreground text-xl font-bold ml-4 flex items-center gap-3" style={{ backgroundColor: themeColor }}>
-        <Button variant="ghost" asChild className="mr-4"><Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary">← Dashboard</Link></Button>
-        <span className="text-4xl">🌳</span> Family Tree
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(135deg, hsl(var(--parchment)) 0%, hsl(var(--parchment-dark)) 100%)',
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Decorative border */}
+      <div className="fixed inset-0 pointer-events-none border-8 border-double opacity-40 z-50"
+           style={{ borderColor: 'hsl(var(--brass))' }} />
+
+      {/* Leather Header */}
+      <div className="relative border-b-2 border-[hsl(var(--brass))] shadow-lg"
+           style={{
+             background: 'linear-gradient(to bottom, hsl(var(--leather)), hsl(var(--brass)/0.3))',
+             boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+           }}>
+        <div className="px-8 py-6 flex items-center gap-4">
+          <Button variant="ghost" asChild className="text-[hsl(var(--parchment))] hover:bg-white/10">
+            <Link to="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-5 h-5" /> Dashboard
+            </Link>
+          </Button>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--brass))]
+                          flex items-center justify-center shadow-lg">
+            <TreePine className="w-5 h-5 text-[hsl(var(--leather))]" />
+          </div>
+          <h1 className="text-2xl font-bold text-[hsl(var(--parchment))] tracking-wide"
+              style={{ fontFamily: 'Georgia, serif', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+            Family Tree
+          </h1>
+        </div>
       </div>
-      
-      <div className="ml-10 mt-9 p-8">
-        <div className="space-y-6">
-          <div className="bg-blue-50 dark:bg-blue-950/20 border-2 border-dashed border-blue-200 dark:border-blue-800 rounded-xl p-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="gedcomFile" className="text-lg font-semibold">Upload Your GEDCOM File</Label>
-                <Input id="gedcomFile" type="file" accept=".ged" onChange={handleFileUpload} className="mt-2" />
-                <p className="text-sm text-muted-foreground mt-2">Upload a .ged file to visualize up to 5 generations.</p>
-              </div>
-              <div>
-                <Label htmlFor="maxGens" className="font-semibold">Number of Generations (max 5):</Label>
-                <Input id="maxGens" type="number" min="1" max="5" value={maxGenerations} onChange={(e) => setMaxGenerations(parseInt(e.target.value) || 5)} className="mt-1 w-32" />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button className="bg-yellow-500 hover:bg-yellow-600 text-white"><Plus className="w-4 h-4 mr-2" />Add Card</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48">
-                    <div className="space-y-2">
-                      <Button variant="ghost" className="w-full justify-start" onClick={() => { setAddType('family'); setNewFamily({ id: Date.now().toString(), sex: 'U', generation: 0 }); setShowAddDialog(true); }}>
-                        <Users className="w-4 h-4 mr-2" />Add Family Member
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start" onClick={() => { setAddType('friend'); setNewFriend({ id: Date.now().toString() }); setShowAddDialog(true); }}>
-                        <UserPlus className="w-4 h-4 mr-2" />Add Friend
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowCardsDialog(true)}>
-                  <Eye className="w-4 h-4 mr-2" />View Family Cards
-                </Button>
-              </div>
+
+      {/* Main Content */}
+      <div className="px-8 py-10 max-w-5xl mx-auto">
+        {/* Upload Section */}
+        <div className="relative p-6 bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))] rounded-lg shadow-xl mb-6">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="gedcomFile" className="text-lg font-semibold text-foreground"
+                     style={{ fontFamily: 'Georgia, serif' }}>
+                Upload Your GEDCOM File
+              </Label>
+              <Input id="gedcomFile" type="file" accept=".ged" onChange={handleFileUpload} className="mt-2 border-[hsl(var(--border))]" />
+              <p className="text-sm text-muted-foreground mt-2">Upload a .ged file to visualize up to 5 generations.</p>
+            </div>
+            <div>
+              <Label htmlFor="maxGens" className="font-semibold text-foreground">Number of Generations (max 5):</Label>
+              <Input id="maxGens" type="number" min="1" max="5" value={maxGenerations}
+                     onChange={(e) => setMaxGenerations(parseInt(e.target.value) || 5)}
+                     className="mt-1 w-32 border-[hsl(var(--border))]" />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button className="bg-gradient-to-r from-[hsl(var(--brass))] to-[hsl(var(--gold))] text-[hsl(var(--leather))] font-bold hover:opacity-90 border border-[hsl(var(--leather))]">
+                    <Plus className="w-4 h-4 mr-2" />Add Card
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 bg-[hsl(var(--card))] border-2 border-[hsl(var(--brass))]">
+                  <div className="space-y-2">
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => { setAddType('family'); setNewFamily({ id: Date.now().toString(), sex: 'U', generation: 0 }); setShowAddDialog(true); }}>
+                      <Users className="w-4 h-4 mr-2" />Add Family Member
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start" onClick={() => { setAddType('friend'); setNewFriend({ id: Date.now().toString() }); setShowAddDialog(true); }}>
+                      <UserPlus className="w-4 h-4 mr-2" />Add Friend
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button className="bg-gradient-to-r from-[hsl(var(--leather))] to-[hsl(var(--brass))] text-[hsl(var(--parchment))] font-bold hover:opacity-90"
+                      onClick={() => setShowCardsDialog(true)}>
+                <Eye className="w-4 h-4 mr-2" />View Family Cards
+              </Button>
             </div>
           </div>
+          {/* Decorative corners */}
+          <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-[hsl(var(--brass))] opacity-40" />
+          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-[hsl(var(--brass))] opacity-40" />
+        </div>
 
-          {gedData.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-card p-4 rounded-lg border border-border"><div className="text-2xl font-bold text-primary">{gedData.length}</div><div className="text-sm text-muted-foreground">Total People</div></div>
-              <div className="bg-card p-4 rounded-lg border border-border"><div className="text-2xl font-bold text-primary">{gedData.filter(p => p.sex === 'M').length}</div><div className="text-sm text-muted-foreground">Males</div></div>
-              <div className="bg-card p-4 rounded-lg border border-border"><div className="text-2xl font-bold text-primary">{gedData.filter(p => p.sex === 'F').length}</div><div className="text-sm text-muted-foreground">Females</div></div>
-            </div>
-          )}
-
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h2 className="text-xl font-semibold mb-4">Family Tree Visualization</h2>
-            <TreeVisualization gedData={gedData} maxGenerations={maxGenerations} />
+        {/* Stats */}
+        {gedData.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {[
+              { label: "Total People", value: gedData.length },
+              { label: "Males", value: gedData.filter(p => p.sex === 'M').length },
+              { label: "Females", value: gedData.filter(p => p.sex === 'F').length },
+            ].map((stat) => (
+              <div key={stat.label} className="relative bg-[hsl(var(--card))] p-4 rounded-lg border-2 border-[hsl(var(--border))] shadow-lg">
+                <div className="text-2xl font-bold text-[hsl(var(--brass))]">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="absolute top-1 right-1 w-4 h-4 border-t border-r border-[hsl(var(--brass))] opacity-30" />
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* Tree Visualization */}
+        <div className="relative p-6 bg-[hsl(var(--card))] rounded-lg border-2 border-[hsl(var(--brass))] shadow-xl">
+          <h2 className="text-xl font-semibold mb-4 text-foreground" style={{ fontFamily: 'Georgia, serif' }}>
+            Family Tree Visualization
+          </h2>
+          <TreeVisualization gedData={gedData} maxGenerations={maxGenerations} />
+          <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-[hsl(var(--brass))] opacity-40" />
+          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-[hsl(var(--brass))] opacity-40" />
         </div>
       </div>
 
