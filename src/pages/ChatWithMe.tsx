@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { STUB_USER } from "@/lib/stubAuth";
 import { chatPromptSchema } from "@/lib/validation";
 
 const ChatWithMe = () => {
