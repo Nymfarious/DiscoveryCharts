@@ -16,6 +16,24 @@ const History = () => {
   const isAdmin = true; // Auth stubbed
   const navigate = useNavigate();
 
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [credit, setCredit] = useState('© Demo — Not for distribution');
+  const [status, setStatus] = useState<'demo_only' | 'licensed' | 'public_domain'>('demo_only');
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  const [cloudUrl, setCloudUrl] = useState('');
+  const [cloudTitle, setCloudTitle] = useState('');
+  const [cloudCredit, setCloudCredit] = useState('');
+  const [cloudStatus, setCloudStatus] = useState<'demo_only' | 'licensed' | 'public_domain'>('demo_only');
+  const [cloudLoading, setCloudLoading] = useState(false);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  function handleSignOut() {
+    navigate('/');
+  }
+
   function handleOpenPoster(posterId: string) {
     navigate(`/workspace?poster=${posterId}`);
   }
