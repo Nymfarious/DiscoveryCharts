@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { STUB_USER } from "@/lib/stubAuth";
 import { User, Home, Shield, Upload } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { profileSchema } from "@/lib/validation";
