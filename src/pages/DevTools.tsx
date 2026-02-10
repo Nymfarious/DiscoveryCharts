@@ -1,54 +1,12 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
-import { Shield, Upload, Home, Map, CheckCircle, Circle } from "lucide-react";
+import { Shield, Home, Map, CheckCircle, Circle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminIngest from "./AdminIngest";
 
 const DevTools = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  async function checkAdminStatus() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    setIsAdmin(!!roles);
-    setLoading(false);
-    
-    if (!roles) {
-      navigate('/');
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return null;
-  }
+  // Auth stubbed — always admin
+  const isAdmin = true;
 
   return (
     <div className="min-h-screen" style={{ 
@@ -103,101 +61,39 @@ const DevTools = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {/* Completed Features */}
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Data model extended</span>
-                  <p className="text-sm text-muted-foreground">Canonical dimensions, z_index, registration, year/theme metadata</p>
+              {[
+                { done: true, title: "Data model extended", desc: "Canonical dimensions, z_index, registration, year/theme metadata" },
+                { done: true, title: "Layer Lab UI", desc: "Visibility toggles, opacity sliders, drag-to-reorder, time slider, theme filtering" },
+                { done: true, title: "Text removal pipeline", desc: "OCR detection + inpainting to create clean base maps" },
+                { done: true, title: "Export functionality", desc: "PDF (layered pages), PNG set (transparent), PPTX (one layer per slide)" },
+                { done: true, title: "Registration marks system", desc: "3-point alignment anchors, visual marks on canvas, display toggle in Layer Lab" },
+                { done: true, title: "Overlay authoring tools", desc: "Vector drawing (line, rect, circle, text, arrow), SVG source saved, PNG export" },
+                { done: true, title: "Backend APIs", desc: "hd-clean-base, hd-vectorize, hd-export-pack, hd-bake-overlay edge functions" },
+                { done: true, title: "Recolor regions tool", desc: "Magic wand selection, lasso polygon, choropleth fills" },
+                { done: true, title: "Compare modes", desc: "Swipe, spyglass, blink modes for layer comparison" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-medium">{item.title}</span>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Layer Lab UI</span>
-                  <p className="text-sm text-muted-foreground">Visibility toggles, opacity sliders, drag-to-reorder, time slider, theme filtering</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Text removal pipeline</span>
-                  <p className="text-sm text-muted-foreground">OCR detection + inpainting to create clean base maps</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Export functionality</span>
-                  <p className="text-sm text-muted-foreground">PDF (layered pages), PNG set (transparent), PPTX (one layer per slide)</p>
-                </div>
-              </div>
+              ))}
 
-              {/* Completed - Registration marks */}
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Registration marks system</span>
-                  <p className="text-sm text-muted-foreground">3-point alignment anchors, visual marks on canvas, display toggle in Layer Lab</p>
+              {[
+                { title: "GeoJSON import pipeline", desc: "MapLibre headless rendering, projection matching" },
+                { title: "Overlay upload interface", desc: "Dimension validation, auto-naming, deduplication" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 flex items-center gap-2">
+                    <span className="font-medium text-muted-foreground">{item.title}</span>
+                    <Badge variant="outline">Coming Soon</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground w-full">{item.desc}</p>
                 </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Overlay authoring tools</span>
-                  <p className="text-sm text-muted-foreground">Vector drawing (line, rect, circle, text, arrow), SVG source saved, PNG export</p>
-                </div>
-              </div>
-
-              {/* Backend APIs - Now Complete */}
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Backend APIs</span>
-                  <p className="text-sm text-muted-foreground">hd-clean-base, hd-vectorize, hd-export-pack, hd-bake-overlay edge functions</p>
-                </div>
-              </div>
-              
-              {/* Recolor Regions - Now Complete */}
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Recolor regions tool</span>
-                  <p className="text-sm text-muted-foreground">Magic wand selection, lasso polygon, choropleth fills</p>
-                </div>
-              </div>
-              
-              {/* Compare Modes - Now Complete */}
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium">Compare modes</span>
-                  <p className="text-sm text-muted-foreground">Swipe, spyglass, blink modes for layer comparison</p>
-                </div>
-              </div>
-
-              {/* Coming Soon Features */}
-              <div className="flex items-start gap-3">
-                <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="font-medium text-muted-foreground">GeoJSON import pipeline</span>
-                  <Badge variant="outline">Coming Soon</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground w-full">MapLibre headless rendering, projection matching</p>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="font-medium text-muted-foreground">Overlay upload interface</span>
-                  <Badge variant="outline">Coming Soon</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground w-full">Dimension validation, auto-naming, deduplication</p>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

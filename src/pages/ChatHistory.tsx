@@ -28,8 +28,7 @@ const ChatHistory = () => {
     loadChatHistory();
   }, []);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
+  function handleSignOut() {
     navigate('/');
   }
 

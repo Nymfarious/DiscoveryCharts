@@ -57,15 +57,12 @@ const Profile = () => {
     localStorage.setItem("secondaryEmail", secondaryEmail);
     localStorage.setItem("avatarUrl", avatarUrl);
     
-    // Update secondary email in Supabase profile if needed
+    // Update secondary email in Supabase profile (using stub user)
     if (secondaryEmail) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('profiles').upsert({
-          user_id: user.id,
-          secondary_email: secondaryEmail
-        });
-      }
+      await supabase.from('profiles').upsert({
+        user_id: STUB_USER.id,
+        secondary_email: secondaryEmail
+      });
     }
     
     toast({

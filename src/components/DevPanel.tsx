@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, X, ChevronUp, Map, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import AdminIngest from "@/pages/AdminIngest";
 import HDAdmin from "@/pages/HDAdmin";
 
@@ -12,25 +10,8 @@ interface DevPanelProps {
 }
 
 export function DevPanel({ isOpen, onClose }: DevPanelProps) {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  async function checkAdminStatus() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    setIsAdmin(!!roles);
-  }
+  // Auth stubbed — always admin
+  const isAdmin = true;
 
   if (!isAdmin) return null;
 

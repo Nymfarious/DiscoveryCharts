@@ -63,15 +63,12 @@ const ChatWithMe = () => {
       const assistantMessage = data.answer;
       setMessages(prev => [...prev, { role: "assistant", content: assistantMessage }]);
 
-      // Save to chat history
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('chat_history').insert({
-          user_id: user.id,
-          question: userMessage,
-          answer: assistantMessage
-        });
-      }
+      // Save to chat history (using stub user)
+      await supabase.from('chat_history').insert({
+        user_id: STUB_USER.id,
+        question: userMessage,
+        answer: assistantMessage
+      });
     } catch (error) {
       toast({
         title: "Error",
