@@ -7,49 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Upload, Download, LogOut, Cloud, Home } from "lucide-react";
+import { MapPin, Upload, Download, LogOut, Home, Cloud } from "lucide-react";
 import { toast } from "sonner";
 import PosterPicker from "@/components/PosterPicker";
 
 const History = () => {
   const [themeColor] = useState<string>("#d4eaf7");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = true; // Auth stubbed
   const navigate = useNavigate();
-  
+
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [credit, setCredit] = useState('© Demo — Not for distribution');
   const [status, setStatus] = useState<'demo_only' | 'licensed' | 'public_domain'>('demo_only');
   const [uploadLoading, setUploadLoading] = useState(false);
-  
+
   const [cloudUrl, setCloudUrl] = useState('');
   const [cloudTitle, setCloudTitle] = useState('');
   const [cloudCredit, setCloudCredit] = useState('');
   const [cloudStatus, setCloudStatus] = useState<'demo_only' | 'licensed' | 'public_domain'>('demo_only');
   const [cloudLoading, setCloudLoading] = useState(false);
-  
+
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  async function checkAdminStatus() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    setIsAdmin(!!roles);
-  }
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
+  function handleSignOut() {
     navigate('/');
   }
 

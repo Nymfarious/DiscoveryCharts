@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Upload, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 export default function AdminIngest() {
   const [file, setFile] = useState<File | null>(null);
@@ -15,33 +14,9 @@ export default function AdminIngest() {
   const [credit, setCredit] = useState('© Demo — Not for distribution');
   const [status, setStatus] = useState<'demo_only' | 'licensed' | 'public_domain'>('demo_only');
   const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  async function checkAdminStatus() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    setIsAdmin(!!roles);
-    if (!roles) {
-      toast.error('Admin access required');
-      navigate('/');
-    }
-  }
+  // Auth stubbed — always admin
+  const isAdmin = true;
 
   async function handleIngest() {
     if (!file) {
@@ -77,7 +52,6 @@ export default function AdminIngest() {
       setCredit('© Demo — Not for distribution');
       setStatus('demo_only');
       
-      // Reset file input
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     } catch (error: any) {
@@ -86,24 +60,6 @@ export default function AdminIngest() {
     } finally {
       setLoading(false);
     }
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2 text-destructive">
-              <Shield className="w-5 h-5" />
-              <CardTitle>Access Denied</CardTitle>
-            </div>
-            <CardDescription>
-              Admin privileges required to access this page
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
   }
 
   return (

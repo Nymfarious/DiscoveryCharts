@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { STUB_USER } from "@/lib/stubAuth";
 import { User, Home, Shield, Upload } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { profileSchema } from "@/lib/validation";
@@ -15,7 +16,7 @@ const Profile = () => {
   const [cityState, setCityState] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [secondaryEmail, setSecondaryEmail] = useState<string>("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = true; // Auth stubbed
   const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   useEffect(() => {
@@ -29,26 +30,8 @@ const Profile = () => {
     setThemeColor(color);
     document.documentElement.style.setProperty('--theme-color', color);
     
-    // Load user email and admin status from Supabase
-    const loadUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserEmail(user.email);
-      }
-      
-      // Check admin status
-      if (user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        
-        setIsAdmin(!!roles);
-      }
-    };
-    loadUserData();
+    // Auth stubbed
+    setUserEmail(STUB_USER.email);
   }, []);
 
   const saveProfile = async () => {
@@ -74,15 +57,12 @@ const Profile = () => {
     localStorage.setItem("secondaryEmail", secondaryEmail);
     localStorage.setItem("avatarUrl", avatarUrl);
     
-    // Update secondary email in Supabase profile if needed
+    // Update secondary email in Supabase profile (using stub user)
     if (secondaryEmail) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('profiles').upsert({
-          user_id: user.id,
-          secondary_email: secondaryEmail
-        });
-      }
+      await supabase.from('profiles').upsert({
+        user_id: STUB_USER.id,
+        secondary_email: secondaryEmail
+      });
     }
     
     toast({

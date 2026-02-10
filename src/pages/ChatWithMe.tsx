@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { STUB_USER } from "@/lib/stubAuth";
 import { chatPromptSchema } from "@/lib/validation";
 
 const ChatWithMe = () => {
@@ -22,8 +23,7 @@ const ChatWithMe = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
+  function handleSignOut() {
     navigate('/');
   }
 
@@ -63,15 +63,12 @@ const ChatWithMe = () => {
       const assistantMessage = data.answer;
       setMessages(prev => [...prev, { role: "assistant", content: assistantMessage }]);
 
-      // Save to chat history
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('chat_history').insert({
-          user_id: user.id,
-          question: userMessage,
-          answer: assistantMessage
-        });
-      }
+      // Save to chat history (using stub user)
+      await supabase.from('chat_history').insert({
+        user_id: STUB_USER.id,
+        question: userMessage,
+        answer: assistantMessage
+      });
     } catch (error) {
       toast({
         title: "Error",
