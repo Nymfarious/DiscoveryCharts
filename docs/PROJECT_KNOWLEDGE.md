@@ -617,7 +617,6 @@ background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--parchment-dar
 
 | File | Status |
 |---|---|
-| `little-sister-6705c220-main/` | Old project snapshot — entire directory is legacy reference, not used in build |
 | `src/ekko-ui.css`, `src/ekko-ui-v2.css`, `src/ekko-ui-v3.css`, `src/ekko-ui-labs.css` | Ekko panel stylesheets |
 | `src/js/ekko-wiring.js`, `-v2.js`, `-v3.js`, `-labs.js` | Ekko vanilla JS wiring |
 | `src/js/safety-helpers.js` | Input sanitization helpers |
